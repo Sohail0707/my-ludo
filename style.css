@@ -4,21 +4,33 @@
   box-sizing: border-box;
 }
 
+/* Initialize primary colors */
+.player-1 {
+  color: tomato;
+}
+.player-2 {
+  color: deepskyblue;
+}
+.player-3 {
+  color: lightgreen;
+}
+.player-4 {
+  color: gold;
+}
+
 main {
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* padding: 1em; */
-  background-color: lightblue;
+  background-color: midnightblue;
 }
 
 .board {
   height: var(--board-size, 1350px);
-  /* width: auto; */
   aspect-ratio: 1 / 1;
-  outline: 1px solid indigo;
+  outline: 1px solid midnightblue;
 
   display: grid;
   grid-template-columns: repeat(15, 1fr);
@@ -30,7 +42,8 @@ main {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(6, 1fr);
-  outline: 1px solid indigo;
+  outline: 1px solid midnightblue;
+  background-color: currentColor;
 
   position: relative;
   z-index: 2;
@@ -38,7 +51,7 @@ main {
   & .home-container {
     grid-column: 2 / span 4;
     grid-row: 2 / span 4;
-    outline: 1px solid indigo;
+    outline: 1px solid midnightblue;
     background-color: whitesmoke;
 
     display: grid;
@@ -46,9 +59,9 @@ main {
     grid-template-rows: 1fr 2fr 2fr 2fr 1fr;
 
     & .home-dot {
-      background-color: var(--primary-color);
-      outline: 1px solid indigo;
-      border-radius: 20%;
+      background-color: currentColor;
+      outline: 1px solid midnightblue;
+      border-radius: 50%;
       &:first-child {
         grid-column: 2 / span 1;
         grid-row: 2 / span 1;
@@ -67,35 +80,27 @@ main {
       }
     }
   }
-  &.current-player {
-    /* outline: 4px solid yellowgreen !important; */
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-    animation: glow 2s ease-in-out infinite alternate;
-  }
 
   &.player-1 {
-    --primary-color: tomato;
-    background-color: var(--primary-color);
     grid-column: 10 / span 6;
     grid-row: 1 / span 6;
   }
   &.player-2 {
-    --primary-color: deepskyblue;
-    background-color: var(--primary-color);
     grid-column: 10 / span 6;
     grid-row: 10 / span 6;
   }
   &.player-3 {
-    --primary-color: lightseagreen;
-    background-color: var(--primary-color);
     grid-column: 1 / span 6;
     grid-row: 10 / span 6;
   }
   &.player-4 {
-    --primary-color: gold;
-    background-color: var(--primary-color);
     grid-column: 1 / span 6;
     grid-row: 1 / span 6;
+  }
+
+  &.current-player {
+    /* outline: 4px solid yellowgreen !important; */
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
   }
 }
 
@@ -106,24 +111,18 @@ main {
   justify-content: center;
   display: flex;
   background-color: whitesmoke;
-  outline: 1px solid indigo;
+  outline: 1px solid midnightblue;
 
-  &.player-1 {
-    background-color: tomato;
-  }
-  &.player-2 {
-    background-color: deepskyblue;
-  }
-  &.player-3 {
-    background-color: lightseagreen;
-  }
+  &.player-1,
+  &.player-2,
+  &.player-3,
   &.player-4 {
-    background-color: gold;
+    background-color: currentColor;
   }
 
   & .star {
     position: relative;
-    color: indigo;
+    color: midnightblue;
     height: 60%;
     stroke-width: 1;
     aspect-ratio: 1 / 1;
@@ -140,39 +139,38 @@ main {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
 
-  & .center-triangle.player-1 {
-    grid-column: 1 / span 3;
-    grid-row: 1 / span 1;
-    background-color: tomato;
-    clip-path: polygon(0 0, 100% 0, 50% 100%);
-  }
-  & .center-triangle.player-2 {
-    grid-column: 2 / span 1;
-    grid-row: 1 / span 3;
-    background-color: deepskyblue;
-    clip-path: polygon(100% 0, 0 50%, 100% 100%);
-  }
-  & .center-triangle.player-3 {
-    grid-column: 1 / span 3;
-    grid-row: 2 / span 1;
-    background-color: lightseagreen;
-    clip-path: polygon(50% 0, 0 100%, 100% 100%);
-  }
-  & .center-triangle.player-4 {
-    grid-column: 1 / span 1;
-    grid-row: 1 / span 3;
-    background-color: gold;
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  & .center-triangle {
+    background-color: currentColor;
+    &.player-1 {
+      grid-column: 1 / span 3;
+      grid-row: 1 / span 1;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+    &.player-2 {
+      grid-column: 2 / span 1;
+      grid-row: 1 / span 3;
+      clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    }
+    &.player-3 {
+      grid-column: 1 / span 3;
+      grid-row: 2 / span 1;
+      clip-path: polygon(50% 0, 0 100%, 100% 100%);
+    }
+    &.player-4 {
+      grid-column: 1 / span 1;
+      grid-row: 1 / span 3;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
   }
 
   & .dice-container {
     position: absolute;
-    width: 60%;
-    aspect-ratio: 1 / 1;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    /* background-color: lightgray; */
+    aspect-ratio: 1 / 1;
+    padding: 1.5em;
+    background-color: midnightblue;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -194,12 +192,26 @@ main {
   cursor: pointer;
 
   & .token-inner {
+    position: relative;
     width: 70%;
     height: 70%;
     border-radius: 50%;
-    background-color: whitesmoke;
+    background-color: currentColor;
     border: 0.2em solid whitesmoke;
     transition: all 0.3s ease;
+
+    /* &::after {
+      content: "";
+      width: max(44px, 150%);
+      height: max(44px, 150%);
+      background-color: black;
+      outline: 2px solid midnightblue;
+
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+    } */
   }
 
   &.safe .token-inner {
@@ -207,15 +219,32 @@ main {
     box-shadow: 0 0 10px gold;
   }
 
+  /* Moveable token popup effect */
   &.moveable {
-    animation: pulse 1s infinite;
     z-index: 15;
-  }
+    /* Create popup effect with minimum 44px touch target */
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: max(44px, calc(100% + 15px));
+      height: max(44px, calc(100% + 15px));
+      background: rgba(255, 255, 255, 0.8);
+      border: 3px solid currentColor;
+      border-radius: 50%;
+      animation: popupPulse 1.5s ease-in-out infinite;
+      z-index: -1;
+    }
 
-  &.moveable .token-inner {
-    border-color: #00ff00;
-    box-shadow: 0 0 15px #00ff00;
-    transform: scale(1.1);
+    &.token-inner {
+      border-color: currentColor;
+      box-shadow: 0 0 20px currentColor;
+      transform: scale(1.15) translateZ(10px);
+      position: relative;
+      z-index: 2;
+    }
   }
 
   &.finished .token-inner {
@@ -223,18 +252,18 @@ main {
     box-shadow: 0 0 20px #4ade80;
     background-color: #86efac !important;
   }
+}
 
-  &.player-1 .token-inner {
-    background-color: tomato;
+/* Popup pulse animation for moveable tokens */
+@keyframes popupPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
   }
-  &.player-2 .token-inner {
-    background-color: deepskyblue;
-  }
-  &.player-3 .token-inner {
-    background-color: lightseagreen;
-  }
-  &.player-4 .token-inner {
-    background-color: gold;
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 1;
   }
 }
 
@@ -245,15 +274,6 @@ main {
   }
   50% {
     transform: scale(1.05);
-  }
-}
-
-@keyframes glow {
-  from {
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  }
-  to {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -268,7 +288,7 @@ main {
   border-radius: 25px;
   font-weight: bold;
   font-size: 16px;
-  color: white;
+  color: whitesmoke;
   text-align: center;
   min-width: 200px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -290,20 +310,6 @@ main {
 
 .game-message.error {
   background: linear-gradient(45deg, #ef4444, #dc2626);
-}
-
-/* Dice interactive styles */
-.cube {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.cube:hover {
-  transform: scale(1.05);
-}
-
-.cube:active {
-  transform: scale(0.95);
 }
 
 /* Sliding back animation for captured tokens */

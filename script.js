@@ -85,9 +85,6 @@ let gameState = "waiting"; // "waiting", "rolling", "moving", "finished"
 let hasRolledSix = false;
 let moveableTokens = [];
 
-// DEBUG MODE - Set to true to enable easy capture testing
-const DEBUG_MODE = true;
-
 // Initialize the game board
 const container = document.querySelector(".board");
 // Create 72 grid items (15x15)
@@ -660,8 +657,7 @@ function rollDice() {
     moveableTokens = findMoveableTokens(currentPlayer);
 
     if (moveableTokens.length === 0) {
-      showMessage(`No valid moves for Player ${currentPlayer}`, "warning");
-      setTimeout(nextTurn, 1500);
+      nextTurn(); // Immediate transition to next player
     } else {
       highlightMoveableTokens(moveableTokens);
       showMessage(
@@ -689,7 +685,6 @@ function handleTokenClick(event) {
 
   // Check if it's current player's token
   if (playerNumber !== currentPlayer) {
-    showMessage(`It's Player ${currentPlayer}'s turn!`, "warning");
     return;
   }
 
@@ -700,7 +695,6 @@ function handleTokenClick(event) {
   );
 
   if (!moveableToken) {
-    showMessage("This token cannot move with current dice roll", "warning");
     return;
   }
 
@@ -797,93 +791,6 @@ document.addEventListener("click", (e) => {
     rollDice();
   }
 });
-
-// =============================================================================
-// DEBUG FUNCTIONS - FOR TESTING CAPTURE ANIMATION
-// =============================================================================
-
-function setupDebugCapture() {
-  if (!DEBUG_MODE) return;
-
-  // Place Player 1 token on the board (at position 10)
-  const player1Token = tokens.player1.token1;
-  const player1Data = getPlayerData(1);
-  const pos1 = player1Data.positions[10]; // Position 10 on player 1's path
-
-  player1Token.element.dataset.x = pos1[0];
-  player1Token.element.dataset.y = pos1[1];
-  player1Token.element.style.setProperty("--data-x", pos1[0]);
-  player1Token.element.style.setProperty("--data-y", pos1[1]);
-  player1Token.position = 10;
-  player1Token.active = true;
-  player1Token.safe = false;
-
-  // Place Player 3 token on the board (at position 15)
-  const player3Token = tokens.player3.token1;
-  const player3Data = getPlayerData(3);
-  const pos3 = player3Data.positions[15]; // Position 15 on player 3's path
-
-  player3Token.element.dataset.x = pos3[0];
-  player3Token.element.dataset.y = pos3[1];
-  player3Token.element.style.setProperty("--data-x", pos3[0]);
-  player3Token.element.style.setProperty("--data-y", pos3[1]);
-  player3Token.position = 15;
-  player3Token.active = true;
-  player3Token.safe = false;
-
-  console.log("🔧 DEBUG: Tokens placed for capture testing");
-  console.log("Player 1 token at:", pos1, "Position index:", 10);
-  console.log("Player 3 token at:", pos3, "Position index:", 15);
-}
-
-function debugTestCapture() {
-  if (!DEBUG_MODE) return;
-
-  // Create a fake capture scenario
-  const captureInfo = {
-    player: 3,
-    token: tokens.player3.token1,
-    tokenKey: "token1",
-  };
-
-  console.log("🔧 DEBUG: Testing capture animation...");
-  slideTokenBackToHome(captureInfo);
-}
-
-// Add debug controls
-if (DEBUG_MODE) {
-  // Add debug buttons to the page
-  setTimeout(() => {
-    const debugContainer = document.createElement("div");
-    debugContainer.style.cssText = `
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      font-family: monospace;
-    `;
-
-    debugContainer.innerHTML = `
-      <div>🔧 DEBUG MODE</div>
-      <button onclick="setupDebugCapture()" style="margin: 5px; padding: 5px 10px;">Setup Tokens</button>
-      <button onclick="debugTestCapture()" style="margin: 5px; padding: 5px 10px;">Test Capture</button>
-      <div style="font-size: 12px; margin-top: 5px;">
-        1. Click "Setup Tokens" to place tokens<br>
-        2. Click "Test Capture" to see animation
-      </div>
-    `;
-
-    document.body.appendChild(debugContainer);
-
-    // Make functions global for button access
-    window.setupDebugCapture = setupDebugCapture;
-    window.debugTestCapture = debugTestCapture;
-  }, 1000);
-}
 
 // Initialize game
 updateCurrentPlayerDisplay();

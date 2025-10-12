@@ -1,3 +1,8 @@
+/* =============================================================================
+   DYNAMIC DICE SIZING SYSTEM
+   All sizes are calculated from --dice-size variable
+   ============================================================================= */
+
 .cube-container {
   position: relative;
   transform-style: preserve-3d;
@@ -14,8 +19,8 @@
 
 .cube {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: var(--dice-size, 100px);
+  height: var(--dice-size, 100px);
   transform-style: preserve-3d;
   transform: rotateX(0deg) rotateY(-0deg) rotateZ(0deg);
   transition: transform 0.5s;
@@ -23,20 +28,20 @@
 
 .face {
   position: absolute;
-  width: 100px;
-  height: 100px;
+  width: var(--dice-size, 100px);
+  height: var(--dice-size, 100px);
   background: #ffffff;
   border: none;
   border-radius: 0px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  padding: 15px;
+  padding: var(--dice-padding, 15px);
 }
 
 .dot {
-  width: 16px;
-  height: 16px;
+  width: var(--dot-size, 16px);
+  height: var(--dot-size, 16px);
   background: #000000;
   border-radius: 50%;
   margin: auto;
@@ -139,26 +144,26 @@
 }
 
 .front {
-  transform: translateZ(50px);
+  transform: translateZ(var(--dice-half, 50px));
   background: #ffffff;
 }
 .back {
-  transform: translateZ(-50px) rotateY(180deg);
+  transform: translateZ(calc(-1 * var(--dice-half, 50px))) rotateY(180deg);
   background: #ffffff;
 }
 .right {
-  transform: rotateY(90deg) translateZ(50px);
+  transform: rotateY(90deg) translateZ(var(--dice-half, 50px));
   background: #e8e8e8;
 }
 .left {
-  transform: rotateY(-90deg) translateZ(50px);
+  transform: rotateY(-90deg) translateZ(var(--dice-half, 50px));
   background: #e8e8e8;
 }
 .top {
-  transform: rotateX(90deg) translateZ(50px);
+  transform: rotateX(90deg) translateZ(var(--dice-half, 50px));
   background: #f5f5f5;
 }
 .bottom {
-  transform: rotateX(-90deg) translateZ(50px);
+  transform: rotateX(-90deg) translateZ(var(--dice-half, 50px));
   background: #d0d0d0;
 }

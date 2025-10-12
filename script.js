@@ -2,13 +2,91 @@
 // LUDO GAME - Complete Implementation
 // =============================================================================
 
+// =============================================================================
+// RESPONSIVE BOARD SIZE CALCULATION
+// =============================================================================
+
+function calculateOptimalBoardSize() {
+  // Get viewport dimensions
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Use 90% of the smaller dimension to leave some padding
+  const availableSize = Math.min(viewportWidth, viewportHeight) * 0.9;
+
+  // Find the largest number divisible by 15 that fits in the available space
+  const gridUnit = Math.floor(availableSize / 15);
+  const optimalSize = gridUnit * 15;
+
+  // Ensure minimum size for playability (minimum 600px)
+  const minSize = 600;
+  const finalSize = Math.max(optimalSize, minSize);
+
+  // If we had to use minimum size, recalculate to ensure divisibility by 15
+  const finalGridUnit = Math.floor(finalSize / 15);
+  const responsiveBoardSize = finalGridUnit * 15;
+
+  console.log(`🎮 Board size calculation:
+    Viewport: ${viewportWidth}x${viewportHeight}
+    Available: ${availableSize}px
+    Grid unit: ${finalGridUnit}px
+    Final board: ${responsiveBoardSize}px`);
+
+  return responsiveBoardSize;
+}
+
+function setResponsiveBoardSize() {
+  const boardSize = calculateOptimalBoardSize();
+  document.documentElement.style.setProperty("--board-size", `${boardSize}px`);
+
+  // Calculate dice size based on board size
+  setResponsiveDiceSize(boardSize);
+}
+
+function setResponsiveDiceSize(boardSize) {
+  // Dice should be proportional to board size
+  // The dice container is 60% of center area, and center is 3/15 of board
+  // So dice area = board * (3/15) * 0.6 = board * 0.12
+  const diceSize = Math.floor(boardSize * 0.08); // 8% of board size
+  const diceHalf = Math.floor(diceSize / 2);
+  const dicePadding = Math.floor(diceSize * 0.15); // 15% of dice size
+  const dotSize = Math.floor(diceSize * 0.16); // 16% of dice size
+
+  // Set CSS custom properties for dice sizing
+  document.documentElement.style.setProperty("--dice-size", `${diceSize}px`);
+  document.documentElement.style.setProperty("--dice-half", `${diceHalf}px`);
+  document.documentElement.style.setProperty(
+    "--dice-padding",
+    `${dicePadding}px`
+  );
+  document.documentElement.style.setProperty("--dot-size", `${dotSize}px`);
+
+  console.log(`🎲 Dice size calculation:
+    Board size: ${boardSize}px
+    Dice size: ${diceSize}px
+    Dice half: ${diceHalf}px  
+    Padding: ${dicePadding}px
+    Dot size: ${dotSize}px`);
+}
+
+// Set initial board size
+setResponsiveBoardSize();
+
+// Recalculate on window resize
+window.addEventListener("resize", () => {
+  setResponsiveBoardSize();
+});
+
 // Game Configuration
-let playerCount = 2;
+let playerCount = 4;
 let currentPlayer = 1;
 let diceValue = 0;
 let gameState = "waiting"; // "waiting", "rolling", "moving", "finished"
 let hasRolledSix = false;
 let moveableTokens = [];
+
+// DEBUG MODE - Set to true to enable easy capture testing
+const DEBUG_MODE = true;
 
 // Initialize the game board
 const container = document.querySelector(".board");
@@ -349,7 +427,7 @@ function checkForCapture(playerNumber, targetX, targetY) {
   return null;
 }
 
-function captureToken(capturedTokenInfo) {
+async function slideTokenBackToHome(capturedTokenInfo) {
   const {
     player: capturedPlayer,
     token: capturedToken,
@@ -359,7 +437,39 @@ function captureToken(capturedTokenInfo) {
   const initialPos =
     playerData.initialPositions[parseInt(tokenKey.replace("token", "")) - 1];
 
-  // Reset token to home
+  // Get current position
+  const currentX = parseInt(capturedToken.element.dataset.x);
+  const currentY = parseInt(capturedToken.element.dataset.y);
+
+  // Find current position in the path
+  const currentIndex = playerData.positions.findIndex(
+    (pos) => pos[0] === currentX && pos[1] === currentY
+  );
+
+  if (currentIndex === -1) return; // Token not on valid path
+
+  // Add special class for slide animation
+  capturedToken.element.classList.add("sliding-back");
+
+  // Create reverse path from current position back to start
+  const reversePath = [];
+  for (let i = currentIndex; i >= 0; i--) {
+    reversePath.push(playerData.positions[i]);
+  }
+
+  // Animate through reverse path with faster, smoother movement
+  for (let i = 0; i < reversePath.length; i++) {
+    const [x, y] = reversePath[i];
+    capturedToken.element.dataset.x = x;
+    capturedToken.element.dataset.y = y;
+    capturedToken.element.style.setProperty("--data-x", x);
+    capturedToken.element.style.setProperty("--data-y", y);
+
+    // Fast and smooth animation for slide effect
+    await sleep(50);
+  }
+
+  // Final slide to home position
   capturedToken.element.dataset.x = initialPos[0];
   capturedToken.element.dataset.y = initialPos[1];
   capturedToken.element.style.setProperty("--data-x", initialPos[0]);
@@ -372,9 +482,17 @@ function captureToken(capturedTokenInfo) {
   capturedToken.finished = false;
 
   // Remove visual effects
-  capturedToken.element.classList.remove("safe", "moveable");
+  capturedToken.element.classList.remove("safe", "moveable", "sliding-back");
 
-  showMessage(`Player ${capturedPlayer} token captured!`, "warning");
+  showMessage(
+    `Player ${capturedPlayer} token captured and sent home!`,
+    "warning"
+  );
+}
+
+function captureToken(capturedTokenInfo) {
+  // Use the new slide animation instead of instant teleport
+  return slideTokenBackToHome(capturedTokenInfo);
 }
 
 async function moveTokenFromHome(player, token, playerNumber) {
@@ -444,7 +562,7 @@ async function moveToken(
     const captureInfo = checkForCapture(playerNumber, finalX, finalY);
 
     if (captureInfo) {
-      captureToken(captureInfo);
+      await captureToken(captureInfo);
       hasRolledSix = true; // Extra turn for capture
     }
   }
@@ -679,6 +797,93 @@ document.addEventListener("click", (e) => {
     rollDice();
   }
 });
+
+// =============================================================================
+// DEBUG FUNCTIONS - FOR TESTING CAPTURE ANIMATION
+// =============================================================================
+
+function setupDebugCapture() {
+  if (!DEBUG_MODE) return;
+
+  // Place Player 1 token on the board (at position 10)
+  const player1Token = tokens.player1.token1;
+  const player1Data = getPlayerData(1);
+  const pos1 = player1Data.positions[10]; // Position 10 on player 1's path
+
+  player1Token.element.dataset.x = pos1[0];
+  player1Token.element.dataset.y = pos1[1];
+  player1Token.element.style.setProperty("--data-x", pos1[0]);
+  player1Token.element.style.setProperty("--data-y", pos1[1]);
+  player1Token.position = 10;
+  player1Token.active = true;
+  player1Token.safe = false;
+
+  // Place Player 3 token on the board (at position 15)
+  const player3Token = tokens.player3.token1;
+  const player3Data = getPlayerData(3);
+  const pos3 = player3Data.positions[15]; // Position 15 on player 3's path
+
+  player3Token.element.dataset.x = pos3[0];
+  player3Token.element.dataset.y = pos3[1];
+  player3Token.element.style.setProperty("--data-x", pos3[0]);
+  player3Token.element.style.setProperty("--data-y", pos3[1]);
+  player3Token.position = 15;
+  player3Token.active = true;
+  player3Token.safe = false;
+
+  console.log("🔧 DEBUG: Tokens placed for capture testing");
+  console.log("Player 1 token at:", pos1, "Position index:", 10);
+  console.log("Player 3 token at:", pos3, "Position index:", 15);
+}
+
+function debugTestCapture() {
+  if (!DEBUG_MODE) return;
+
+  // Create a fake capture scenario
+  const captureInfo = {
+    player: 3,
+    token: tokens.player3.token1,
+    tokenKey: "token1",
+  };
+
+  console.log("🔧 DEBUG: Testing capture animation...");
+  slideTokenBackToHome(captureInfo);
+}
+
+// Add debug controls
+if (DEBUG_MODE) {
+  // Add debug buttons to the page
+  setTimeout(() => {
+    const debugContainer = document.createElement("div");
+    debugContainer.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+    `;
+
+    debugContainer.innerHTML = `
+      <div>🔧 DEBUG MODE</div>
+      <button onclick="setupDebugCapture()" style="margin: 5px; padding: 5px 10px;">Setup Tokens</button>
+      <button onclick="debugTestCapture()" style="margin: 5px; padding: 5px 10px;">Test Capture</button>
+      <div style="font-size: 12px; margin-top: 5px;">
+        1. Click "Setup Tokens" to place tokens<br>
+        2. Click "Test Capture" to see animation
+      </div>
+    `;
+
+    document.body.appendChild(debugContainer);
+
+    // Make functions global for button access
+    window.setupDebugCapture = setupDebugCapture;
+    window.debugTestCapture = debugTestCapture;
+  }, 1000);
+}
 
 // Initialize game
 updateCurrentPlayerDisplay();

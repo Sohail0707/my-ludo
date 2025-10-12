@@ -1,0 +1,164 @@
+.cube-container {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  transition: transform 0.5s;
+}
+
+.outer-cube {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  transition: transform 0.5s;
+}
+
+.cube {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  transform-style: preserve-3d;
+  transform: rotateX(0deg) rotateY(-0deg) rotateZ(0deg);
+  transition: transform 0.5s;
+}
+
+.face {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: #ffffff;
+  border: none;
+  border-radius: 0px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  padding: 15px;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  background: #000000;
+  border-radius: 50%;
+  margin: auto;
+}
+
+/* Face 1 - One dot in center */
+.face-1 .dot {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Face 2 - Two dots diagonal */
+.face-2 .dot:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.face-2 .dot:nth-child(2) {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Face 3 - Three dots diagonal */
+.face-3 .dot:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.face-3 .dot:nth-child(2) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.face-3 .dot:nth-child(3) {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Face 4 - Four dots in corners */
+.face-4 .dot:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.face-4 .dot:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+.face-4 .dot:nth-child(3) {
+  grid-column: 1;
+  grid-row: 3;
+}
+.face-4 .dot:nth-child(4) {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Face 5 - Five dots (four corners + center) */
+.face-5 .dot:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.face-5 .dot:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+.face-5 .dot:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.face-5 .dot:nth-child(4) {
+  grid-column: 1;
+  grid-row: 3;
+}
+.face-5 .dot:nth-child(5) {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Face 6 - Six dots in two columns */
+.face-6 .dot:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.face-6 .dot:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+.face-6 .dot:nth-child(3) {
+  grid-column: 1;
+  grid-row: 2;
+}
+.face-6 .dot:nth-child(4) {
+  grid-column: 3;
+  grid-row: 2;
+}
+.face-6 .dot:nth-child(5) {
+  grid-column: 1;
+  grid-row: 3;
+}
+.face-6 .dot:nth-child(6) {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.front {
+  transform: translateZ(50px);
+  background: #ffffff;
+}
+.back {
+  transform: translateZ(-50px) rotateY(180deg);
+  background: #ffffff;
+}
+.right {
+  transform: rotateY(90deg) translateZ(50px);
+  background: #e8e8e8;
+}
+.left {
+  transform: rotateY(-90deg) translateZ(50px);
+  background: #e8e8e8;
+}
+.top {
+  transform: rotateX(90deg) translateZ(50px);
+  background: #f5f5f5;
+}
+.bottom {
+  transform: rotateX(-90deg) translateZ(50px);
+  background: #d0d0d0;
+}

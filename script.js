@@ -350,6 +350,9 @@ function initializePlayerTokens(player, playerNumber) {
 
     const tokenInnerElement = document.createElement("div");
     tokenInnerElement.classList.add("token-inner");
+    tokenInnerElement.innerHTML = `<img src="assets/token${playerNumber}.png" alt="P${playerNumber} Token ${
+      index + 1
+    }">`;
 
     tokenElement.appendChild(tokenInnerElement);
     tokens[`player${playerNumber}`][`token${index + 1}`].element = tokenElement;

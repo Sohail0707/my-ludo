@@ -6,16 +6,16 @@
 
 /* Initialize primary colors */
 .player-1 {
-  color: tomato;
+  color: #ff6347;
 }
 .player-2 {
-  color: deepskyblue;
+  color: #00bfff;
 }
 .player-3 {
-  color: lightgreen;
+  color: #90ee90;
 }
 .player-4 {
-  color: gold;
+  color: #ffd700;
 }
 
 main {
@@ -214,18 +214,14 @@ main {
     border: 0.2em solid whitesmoke;
     transition: all 0.3s ease;
 
-    /* &::after {
-      content: "";
-      width: max(44px, 150%);
-      height: max(44px, 150%);
-      background-color: black;
-      outline: 2px solid midnightblue;
-
+    & img {
+      height: 0;
       position: absolute;
       bottom: 50%;
       left: 50%;
       transform: translateX(-50%);
-    } */
+      transition: all 0.3s ease;
+    }
   }
 
   &.safe .token-inner {
@@ -258,6 +254,9 @@ main {
       transform: scale(1.15) translateZ(10px);
       position: relative;
       z-index: 2;
+      & img {
+        height: 96px;
+      }
     }
   }
 

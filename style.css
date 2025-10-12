@@ -179,23 +179,41 @@ main {
   aspect-ratio: 1 / 1;
   left: calc((100% / 15) * var(--data-y));
   top: calc((100% / 15) * var(--data-x));
-  /* left: calc((100% / 15) * 12.5);
-  top: calc((100% / 15) * 12.5); */
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  cursor: pointer;
+
   & .token-inner {
     width: 70%;
     height: 70%;
     border-radius: 50%;
     background-color: whitesmoke;
     border: 0.2em solid whitesmoke;
+    transition: all 0.3s ease;
   }
 
   &.safe .token-inner {
     border-color: gold;
     box-shadow: 0 0 10px gold;
+  }
+
+  &.moveable {
+    animation: pulse 1s infinite;
+    z-index: 15;
+  }
+
+  &.moveable .token-inner {
+    border-color: #00ff00;
+    box-shadow: 0 0 15px #00ff00;
+    transform: scale(1.1);
+  }
+
+  &.finished .token-inner {
+    border-color: #4ade80;
+    box-shadow: 0 0 20px #4ade80;
+    background-color: #86efac !important;
   }
 
   &.player-1 .token-inner {
@@ -210,6 +228,81 @@ main {
   &.player-4 .token-inner {
     background-color: gold;
   }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Current player highlight */
+.home.current-player {
+  border: 4px solid #ffffff !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* Game message styles */
+.game-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 15px 25px;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  min-width: 200px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  display: none;
+}
+
+.game-message.info {
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+}
+
+.game-message.success {
+  background: linear-gradient(45deg, #10b981, #047857);
+}
+
+.game-message.warning {
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+}
+
+.game-message.error {
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+}
+
+/* Dice interactive styles */
+.cube {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.cube:hover {
+  transform: scale(1.05);
+}
+
+.cube:active {
+  transform: scale(0.95);
 }
 
 /* @media (orientation: portrait) {

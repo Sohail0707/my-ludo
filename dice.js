@@ -73,6 +73,10 @@ function showDiceFace(faceNumber) {
   }
 }
 
+// Make functions available globally
+window.showDiceFace = showDiceFace;
+window.shuffleCube = shuffleCube;
+
 // Function to shuffle the cube with random face selections
 function shuffleCube() {
   const outerCube = document.querySelector(".outer-cube");
@@ -80,9 +84,17 @@ function shuffleCube() {
 
   console.log("🎲 Starting cube shuffle...");
 
-  // Generate first random dice number and show it immediately
-  const firstRandomFace = generateVeryRandomDiceNumber();
-  console.log(`🎯 First random face: ${firstRandomFace}`);
+  // Generate the final dice number that will be used for the game
+  const finalDiceValue = generateVeryRandomDiceNumber();
+  console.log(`🎯 Final dice value for game: ${finalDiceValue}`);
+
+  // Generate first random face for shuffle animation (different from final)
+  let firstRandomFace = generateVeryRandomDiceNumber();
+  // Ensure first face is different from final for better visual effect
+  while (firstRandomFace === finalDiceValue) {
+    firstRandomFace = generateVeryRandomDiceNumber();
+  }
+
   executeShowDiceFace(firstRandomFace);
 
   // Get current transform values or default to 0
@@ -105,21 +117,23 @@ function shuffleCube() {
   // After 200ms, reset scale to normal and show final face
   setTimeout(() => {
     // Reset scale to normal
+    const cube = document.querySelector(".cube");
     const currentTransform = cube.style.transform.replace(
       / scale\([^)]*\)/g,
       ""
     );
     cube.style.transform = currentTransform;
 
-    // Generate second very random dice number
-    const secondRandomFace = generateVeryRandomDiceNumber();
     console.log(
-      `🎯 Cube shuffle complete! Final rolling face: ${secondRandomFace}`
+      `🎯 Cube shuffle complete! Showing final dice value: ${finalDiceValue}`
     );
 
-    // Show the second random face
-    executeShowDiceFace(secondRandomFace);
+    // Show the final dice value
+    executeShowDiceFace(finalDiceValue);
   }, 200);
+
+  // Return the final dice value for the game logic
+  return finalDiceValue;
 }
 
 // Function to generate a very random dice number (1-6)
@@ -141,8 +155,5 @@ function generateVeryRandomDiceNumber() {
 document.addEventListener("DOMContentLoaded", function () {
   const cube = document.querySelector(".cube");
 
-  // Add click event to cube for shuffling
-  cube.addEventListener("click", function () {
-    shuffleCube();
-  });
+  // Note: Click event for cube is now handled in script.js for game integration
 });

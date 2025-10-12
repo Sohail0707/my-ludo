@@ -1,5 +1,16 @@
-let playerCount = 2;
+// =============================================================================
+// LUDO GAME - Complete Implementation
+// =============================================================================
 
+// Game Configuration
+let playerCount = 2;
+let currentPlayer = 1;
+let diceValue = 0;
+let gameState = "waiting"; // "waiting", "rolling", "moving", "finished"
+let hasRolledSix = false;
+let moveableTokens = [];
+
+// Initialize the game board
 const container = document.querySelector(".board");
 // Create 72 grid items (15x15)
 for (let i = 0; i < 72; i++) {
@@ -36,33 +47,37 @@ for (let i = 0; i < 72; i++) {
   container.appendChild(gridItem);
 }
 
-// token State and Positions
+// =============================================================================
+// TOKEN MANAGEMENT & GAME DATA
+// =============================================================================
+
+// Token State and Positions
 const tokens = {
   player1: {
     token1: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token2: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token3: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token4: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
@@ -71,28 +86,28 @@ const tokens = {
   player2: {
     token1: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token2: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token3: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token4: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
@@ -101,28 +116,28 @@ const tokens = {
   player3: {
     token1: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token2: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token3: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token4: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
@@ -131,28 +146,28 @@ const tokens = {
   player4: {
     token1: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token2: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token3: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
     },
     token4: {
       element: null,
-      position: null,
+      position: -1,
       active: false,
       safe: true,
       finished: false,
@@ -160,9 +175,7 @@ const tokens = {
   },
 };
 
-let currentPlayer = 1;
-let diceValue = 0;
-
+// Player paths and starting positions
 // prettier-ignore
 const player1 = {
   positions : [
@@ -203,9 +216,439 @@ const player4 = {
   ],
 }
 
+// Safe positions on the board (star positions and special safe zones)
 const safe_index = [8, 13, 21, 26, 34, 39, 47];
 
-// Initialize tokens for all players
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getPlayerData(playerNumber) {
+  return eval(`player${playerNumber}`);
+}
+
+function showMessage(text, type = "info") {
+  // Create message element if it doesn't exist
+  let messageEl = document.querySelector(".game-message");
+  if (!messageEl) {
+    messageEl = document.createElement("div");
+    messageEl.className = "game-message";
+    document.body.appendChild(messageEl);
+  }
+
+  messageEl.textContent = text;
+  messageEl.className = `game-message ${type}`;
+  messageEl.style.display = "block";
+
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    messageEl.style.display = "none";
+  }, 3000);
+}
+
+// =============================================================================
+// TOKEN INITIALIZATION
+// =============================================================================
+
+function initializePlayerTokens(player, playerNumber) {
+  const board = document.querySelector(".board");
+  player.initialPositions.forEach((pos, index) => {
+    const [x, y] = pos;
+
+    const tokenElement = document.createElement("div");
+    tokenElement.classList.add(
+      "token",
+      `token-${index + 1}`,
+      `player-${playerNumber}`
+    );
+
+    tokenElement.style.setProperty("--data-x", x);
+    tokenElement.style.setProperty("--data-y", y);
+    tokenElement.dataset.x = x;
+    tokenElement.dataset.y = y;
+    tokenElement.dataset.player = playerNumber;
+    tokenElement.dataset.tokenNumber = index + 1;
+
+    const tokenInnerElement = document.createElement("div");
+    tokenInnerElement.classList.add("token-inner");
+
+    tokenElement.appendChild(tokenInnerElement);
+    tokens[`player${playerNumber}`][`token${index + 1}`].element = tokenElement;
+    board.appendChild(tokenElement);
+  });
+}
+
+// =============================================================================
+// GAME LOGIC FUNCTIONS
+// =============================================================================
+
+function findMoveableTokens(playerNumber) {
+  const playerTokens = tokens[`player${playerNumber}`];
+  const moveableTokens = [];
+
+  for (const tokenKey in playerTokens) {
+    const token = playerTokens[tokenKey];
+
+    // If token is at home and dice shows 6, it can move
+    if (!token.active && diceValue === 6) {
+      moveableTokens.push({
+        token,
+        tokenKey,
+        canMove: true,
+        reason: "exit_home",
+      });
+    }
+    // If token is on board and won't exceed the path
+    else if (token.active && !token.finished) {
+      const playerData = getPlayerData(playerNumber);
+      const newPosition = token.position + diceValue;
+
+      if (newPosition < playerData.positions.length) {
+        moveableTokens.push({
+          token,
+          tokenKey,
+          canMove: true,
+          reason: "normal_move",
+        });
+      } else if (newPosition === playerData.positions.length) {
+        moveableTokens.push({
+          token,
+          tokenKey,
+          canMove: true,
+          reason: "finish",
+        });
+      }
+    }
+  }
+
+  return moveableTokens;
+}
+
+function checkForCapture(playerNumber, targetX, targetY) {
+  // Check if any opponent token is at the target position
+  for (let p = 1; p <= 4; p++) {
+    if (p === playerNumber) continue; // Skip current player
+
+    const playerTokens = tokens[`player${p}`];
+    for (const tokenKey in playerTokens) {
+      const token = playerTokens[tokenKey];
+      if (token.active && !token.finished && !token.safe) {
+        const tokenX = parseInt(token.element.dataset.x);
+        const tokenY = parseInt(token.element.dataset.y);
+
+        if (tokenX === targetX && tokenY === targetY) {
+          return { player: p, token: token, tokenKey: tokenKey };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function captureToken(capturedTokenInfo) {
+  const {
+    player: capturedPlayer,
+    token: capturedToken,
+    tokenKey,
+  } = capturedTokenInfo;
+  const playerData = getPlayerData(capturedPlayer);
+  const initialPos =
+    playerData.initialPositions[parseInt(tokenKey.replace("token", "")) - 1];
+
+  // Reset token to home
+  capturedToken.element.dataset.x = initialPos[0];
+  capturedToken.element.dataset.y = initialPos[1];
+  capturedToken.element.style.setProperty("--data-x", initialPos[0]);
+  capturedToken.element.style.setProperty("--data-y", initialPos[1]);
+
+  // Reset token state
+  capturedToken.position = -1;
+  capturedToken.active = false;
+  capturedToken.safe = true;
+  capturedToken.finished = false;
+
+  // Remove visual effects
+  capturedToken.element.classList.remove("safe", "moveable");
+
+  showMessage(`Player ${capturedPlayer} token captured!`, "warning");
+}
+
+async function moveTokenFromHome(player, token, playerNumber) {
+  const startX = player.positions[0][0];
+  const startY = player.positions[0][1];
+
+  token.dataset.x = startX;
+  token.dataset.y = startY;
+  token.style.setProperty("--data-x", startX);
+  token.style.setProperty("--data-y", startY);
+
+  // Update token state
+  const tokenKey = `token${token.dataset.tokenNumber}`;
+  tokens[`player${playerNumber}`][tokenKey].position = 0;
+  tokens[`player${playerNumber}`][tokenKey].active = true;
+  tokens[`player${playerNumber}`][tokenKey].safe = true; // Starting position is safe
+
+  showMessage(`Player ${playerNumber} token entered the board!`, "success");
+}
+
+async function moveToken(
+  path,
+  tokenElement,
+  tokenData,
+  diceRoll,
+  playerNumber
+) {
+  const currentIndex = tokenData.position;
+  const startIndex = currentIndex + 1;
+  const endIndex = Math.min(startIndex + diceRoll - 1, path.length - 1);
+
+  for (let i = startIndex; i <= endIndex; i++) {
+    const coords = path[i];
+    const [x, y] = coords;
+    tokenElement.dataset.x = x;
+    tokenElement.dataset.y = y;
+    tokenElement.style.setProperty("--data-x", x);
+    tokenElement.style.setProperty("--data-y", y);
+
+    // Update safe status
+    if (safe_index.includes(i)) {
+      setTimeout(() => {
+        tokenElement.classList.add("safe");
+        tokenData.safe = true;
+      }, 200);
+    } else {
+      tokenElement.classList.remove("safe");
+      tokenData.safe = false;
+    }
+
+    await sleep(300);
+  }
+
+  // Update final position
+  tokenData.position = endIndex;
+
+  // Check if token finished
+  if (endIndex === path.length - 1) {
+    tokenData.finished = true;
+    tokenElement.classList.add("finished");
+    showMessage(`Player ${playerNumber} token reached home!`, "success");
+    checkWinCondition(playerNumber);
+  } else {
+    // Check for capture
+    const finalX = parseInt(tokenElement.dataset.x);
+    const finalY = parseInt(tokenElement.dataset.y);
+    const captureInfo = checkForCapture(playerNumber, finalX, finalY);
+
+    if (captureInfo) {
+      captureToken(captureInfo);
+      hasRolledSix = true; // Extra turn for capture
+    }
+  }
+}
+
+function checkWinCondition(playerNumber) {
+  const playerTokens = tokens[`player${playerNumber}`];
+  const finishedCount = Object.values(playerTokens).filter(
+    (token) => token.finished
+  ).length;
+
+  if (finishedCount === 4) {
+    gameState = "finished";
+    showMessage(`🎉 Player ${playerNumber} WINS! 🎉`, "success");
+
+    // Disable further dice rolls
+    const cube = document.querySelector(".cube");
+    cube.style.pointerEvents = "none";
+    cube.style.opacity = "0.5";
+  }
+}
+
+function nextTurn() {
+  if (gameState === "finished") return;
+
+  // Clear visual highlights
+  clearTokenHighlights();
+
+  if (!hasRolledSix) {
+    // Move to next player
+    if (playerCount === 2) {
+      currentPlayer = currentPlayer === 1 ? 3 : 1;
+    } else {
+      currentPlayer = currentPlayer >= 4 ? 1 : currentPlayer + 1;
+    }
+  }
+
+  hasRolledSix = false;
+  gameState = "waiting";
+  updateCurrentPlayerDisplay();
+  showMessage(`Player ${currentPlayer}'s turn`, "info");
+}
+
+function updateCurrentPlayerDisplay() {
+  // Remove current player highlight from all homes
+  document.querySelectorAll(".home").forEach((home) => {
+    home.classList.remove("current-player");
+  });
+
+  // Add highlight to current player's home
+  const currentHome = document.querySelector(`.home.player-${currentPlayer}`);
+  if (currentHome) {
+    currentHome.classList.add("current-player");
+  }
+}
+
+function clearTokenHighlights() {
+  document.querySelectorAll(".token").forEach((token) => {
+    token.classList.remove("moveable");
+  });
+}
+
+function highlightMoveableTokens(moveableTokens) {
+  clearTokenHighlights();
+  moveableTokens.forEach(({ token }) => {
+    token.element.classList.add("moveable");
+  });
+}
+
+// =============================================================================
+// DICE INTEGRATION
+// =============================================================================
+
+function rollDice() {
+  if (gameState !== "waiting" || gameState === "finished") {
+    return;
+  }
+
+  gameState = "rolling";
+
+  // Use the shuffle animation and get the dice value
+  if (window.shuffleCube) {
+    diceValue = window.shuffleCube();
+  } else {
+    // Fallback if shuffleCube is not available
+    diceValue = Math.floor(Math.random() * 6) + 1;
+    if (window.showDiceFace) {
+      showDiceFace(diceValue);
+    }
+  }
+
+  // After dice animation, check for moveable tokens
+  setTimeout(() => {
+    gameState = "moving";
+    moveableTokens = findMoveableTokens(currentPlayer);
+
+    if (moveableTokens.length === 0) {
+      showMessage(`No valid moves for Player ${currentPlayer}`, "warning");
+      setTimeout(nextTurn, 1500);
+    } else {
+      highlightMoveableTokens(moveableTokens);
+      showMessage(
+        `Player ${currentPlayer} rolled ${diceValue}. Choose a token to move.`,
+        "info"
+      );
+
+      if (diceValue === 6) {
+        hasRolledSix = true;
+      }
+    }
+  }, 1000); // Reduced timeout since we're not calling showDiceFace separately
+}
+
+// =============================================================================
+// EVENT HANDLERS
+// =============================================================================
+
+function handleTokenClick(event) {
+  if (gameState !== "moving") return;
+
+  const tokenElement = event.currentTarget;
+  const playerNumber = parseInt(tokenElement.dataset.player);
+  const tokenNumber = parseInt(tokenElement.dataset.tokenNumber);
+
+  // Check if it's current player's token
+  if (playerNumber !== currentPlayer) {
+    showMessage(`It's Player ${currentPlayer}'s turn!`, "warning");
+    return;
+  }
+
+  // Check if token is moveable
+  const tokenKey = `token${tokenNumber}`;
+  const moveableToken = moveableTokens.find(
+    ({ tokenKey: key }) => key === tokenKey
+  );
+
+  if (!moveableToken) {
+    showMessage("This token cannot move with current dice roll", "warning");
+    return;
+  }
+
+  // Execute the move
+  executeMoveToken(tokenElement, playerNumber, tokenNumber, moveableToken);
+}
+
+async function executeMoveToken(
+  tokenElement,
+  playerNumber,
+  tokenNumber,
+  moveableToken
+) {
+  gameState = "animating";
+  clearTokenHighlights();
+
+  const tokenKey = `token${tokenNumber}`;
+  const tokenData = tokens[`player${playerNumber}`][tokenKey];
+  const playerData = getPlayerData(playerNumber);
+
+  if (moveableToken.reason === "exit_home") {
+    await moveTokenFromHome(playerData, tokenElement, playerNumber);
+  } else if (moveableToken.reason === "finish") {
+    // Move to center (finish position)
+    tokenData.finished = true;
+    tokenElement.classList.add("finished");
+
+    // Move to center triangle
+    const centerTriangle = document.querySelector(
+      `.center-triangle.player-${playerNumber}`
+    );
+    if (centerTriangle) {
+      const rect = centerTriangle.getBoundingClientRect();
+      const boardRect = document
+        .querySelector(".board")
+        .getBoundingClientRect();
+      const x =
+        (rect.left + rect.width / 2 - boardRect.left) / (boardRect.width / 15);
+      const y =
+        (rect.top + rect.height / 2 - boardRect.top) / (boardRect.height / 15);
+
+      tokenElement.style.setProperty("--data-x", x);
+      tokenElement.style.setProperty("--data-y", y);
+    }
+
+    showMessage(`Player ${playerNumber} token reached home!`, "success");
+    checkWinCondition(playerNumber);
+  } else {
+    await moveToken(
+      playerData.positions,
+      tokenElement,
+      tokenData,
+      diceValue,
+      playerNumber
+    );
+  }
+
+  // Move to next turn after animation
+  setTimeout(nextTurn, 500);
+}
+
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+
+// Initialize tokens for active players
 if (playerCount == 2 || playerCount == 4) {
   if (player1.initialPositions) {
     initializePlayerTokens(player1, 1);
@@ -223,135 +666,23 @@ if (playerCount == 4) {
   }
 }
 
-// Initialize tokens for all players
-function initializePlayerTokens(player, playerNumber) {
-  const board = document.querySelector(".board");
-  player.initialPositions.forEach((pos, index) => {
-    const [x, y] = pos;
-
-    const tokenElement = document.createElement("div");
-    tokenElement.classList.add(
-      "token",
-      `token-${index + 1}`,
-      `player-${playerNumber}`
-    );
-
-    tokenElement.style.setProperty("--data-x", x);
-    tokenElement.style.setProperty("--data-y", y);
-    tokenElement.dataset.x = x;
-    tokenElement.dataset.y = y;
-
-    const tokenInnerElement = document.createElement("div");
-    tokenInnerElement.classList.add("token-inner");
-
-    tokenElement.appendChild(tokenInnerElement);
-    tokens[`player${playerNumber}`][`token${index + 1}`].element = tokenElement;
-    board.appendChild(tokenElement);
-  });
-}
-
-// Function to move a token from home to the starting position
-function moveTokenFromHome(player, token, playerNumber) {
-  const startX = player.positions[0][0];
-  const startY = player.positions[0][1];
-
-  token.dataset.x = startX;
-  token.dataset.y = startY;
-
-  // Set CSS custom properties
-  token.style.setProperty("--data-x", startX);
-  token.style.setProperty("--data-y", startY);
-}
-
-// Function to move a token along its path
-async function moveToken(path, token, diceRoll) {
-  // Find the current position of the token on its path
-  const currentX = parseInt(token.dataset.x);
-  const currentY = parseInt(token.dataset.y);
-  const currentIndex = path.findIndex(
-    (coords) => coords[0] === currentX && coords[1] === currentY
-  );
-
-  // Determine the starting index for the move
-  const startIndex = currentIndex === -1 ? 0 : currentIndex + 1;
-  const endIndex = Math.min(startIndex + diceRoll, path.length);
-
-  for (let i = startIndex; i < endIndex; i++) {
-    const coords = path[i];
-    const [x, y] = coords;
-    token.dataset.x = x;
-    token.dataset.y = y;
-
-    // Set CSS custom properties
-    token.style.setProperty("--data-x", x);
-    token.style.setProperty("--data-y", y);
-
-    if (safe_index.includes(i)) {
-      setTimeout(() => {
-        token.classList.add("safe");
-      }, 200);
-      await sleep(500);
-    } else {
-      token.classList.remove("safe");
-    }
-
-    await sleep(500);
+// Add event listeners to all tokens
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".token")) {
+    handleTokenClick({ currentTarget: e.target.closest(".token") });
   }
-}
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const diceRoller = document.querySelector(".dice-roller");
-diceRoller.addEventListener("click", () => {
-  const roll = Math.floor(Math.random() * 6) + 1;
-  diceValue = roll;
-  diceRoller.textContent = roll;
 });
 
-// Example usage:
-document.querySelectorAll(".token").forEach((tokenElement) => {
-  tokenElement.addEventListener("click", async (event) => {
-    const element = event.currentTarget;
-    let player, playerNumber, token, tokenNumber;
-
-    // Find which player and token this element belongs to
-    for (const pKey in tokens) {
-      for (const tKey in tokens[pKey]) {
-        if (tokens[pKey][tKey].element === element) {
-          playerNumber = pKey.replace("player", "");
-          tokenNumber = tKey.replace("token", "");
-          player = eval(`player${playerNumber}`); // Gets the player path object e.g., player1
-          token = tokens[pKey][tKey];
-          break;
-        }
-      }
-      if (player) break;
-    }
-
-    if (!token) return;
-
-    // If token is at home (not active)
-    if (!token.active) {
-      // A dice roll of 6 is required to move out of home
-      // For this example, we'll assume a 6 was rolled.
-      moveTokenFromHome(player, element, playerNumber);
-      token.active = true;
-      token.position = 0; // Starting position index
-      token.safe = true; // Starting position is always safe
-    } else {
-      // If token is already on the board, move it 6 steps
-      await moveToken(player.positions, element, diceValue);
-      // Update token's position index after the move
-      const currentX = parseInt(element.dataset.x);
-      const currentY = parseInt(element.dataset.y);
-      const newIndex = player.positions.findIndex(
-        (pos) => pos[0] === currentX && pos[1] === currentY
-      );
-      if (newIndex !== -1) {
-        token.position = newIndex;
-        token.safe = safe_index.includes(newIndex);
-      }
-    }
-  });
+// Add dice click handler
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".cube")) {
+    rollDice();
+  }
 });
+
+// Initialize game
+updateCurrentPlayerDisplay();
+showMessage(
+  `Game started! Player ${currentPlayer}'s turn. Click the dice to roll.`,
+  "info"
+);

@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Define colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Display script header
+echo -e "${BLUE}=== Nginx Server Setup Script ===${NC}"
+
+# Prompt for the server name and port
+echo -e "${CYAN}"
+read -p "Enter the server name: " server_name
+read -p "Enter the port number: " port_number
+echo -e "${NC}"
+
+# Get the current directory as the root directory
+root_directory=$(pwd)
+echo -e "${YELLOW}Root directory: ${root_directory}${NC}"
+
+# Automatically detect PHP version
+php_version=$(php -v | grep -oP '^PHP \K[0-9]+\.[0-9]+')
+echo -e "${YELLOW}PHP version detected: ${php_version}${NC}"
+
+# Create the Nginx config file
+config_file="/etc/nginx/sites-available/$server_name"
+echo -e "${BLUE}Creating Nginx configuration file...${NC}"
+
+sudo tee $config_file > /dev/null <<EOL
+server {
+    listen $port_number;
+    server_name $server_name;
+
+    root $root_directory;
+    index index.php index.html index.htm;
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php${php_version}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME \$request_filename;
+        include fastcgi_params;
+    }
+
+    # Prevent caching for static files
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)\$ {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+        add_header Pragma "no-cache";
+    }
+}
+EOL
+
+# Create a symbolic link in the sites-enabled directory
+echo -e "${BLUE}Creating symbolic link...${NC}"
+sudo ln -sf $config_file /etc/nginx/sites-enabled/
+
+# Test Nginx configuration
+echo -e "${BLUE}Testing Nginx configuration...${NC}"
+sudo nginx -t
+
+# Restart Nginx if the configuration is valid
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Nginx configuration is successful. Restarting Nginx...${NC}"
+    sudo systemctl restart nginx
+    echo -e "${GREEN}✓ Nginx server setup completed for '${YELLOW}${server_name}${GREEN}' at port ${YELLOW}${port_number}${GREEN}.${NC}"
+else
+    echo -e "${RED}✗ Nginx configuration failed. Please check the error messages above.${NC}"
+fi

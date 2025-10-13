@@ -311,30 +311,30 @@ function getPlayerData(playerNumber) {
 }
 
 function updateTokenZIndex(tokenElement, position) {
-  // Base z-index for tokens is 10
-  // Add position value to make tokens further along the path appear on top
-  // Add extra boost for moveable tokens
-  const baseZIndex = 10;
-  const positionBonus = Math.max(0, position); // Ensure non-negative
+  // Get the --data-x value from the token element
+  const dataX = parseInt(tokenElement.style.getPropertyValue("--data-x")) || 0;
+
+  // Use --data-x as the z-index directly
+  // Add extra boost for moveable tokens to ensure they're always on top
   const moveableBonus = tokenElement.classList.contains("moveable") ? 1000 : 0;
 
-  const finalZIndex = baseZIndex + positionBonus + moveableBonus;
+  const finalZIndex = dataX + moveableBonus;
   tokenElement.style.zIndex = finalZIndex;
 
   console.log(
-    `🔧 Token z-index updated: position=${position}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
+    `🔧 Token z-index updated: --data-x=${dataX}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
       "moveable"
     )}`
   );
 }
 
 function updateAllTokenZIndices() {
-  // Update z-index for all active tokens based on their current positions
+  // Update z-index for all active tokens based on their --data-x values
   for (let p = 1; p <= 4; p++) {
     const playerTokens = tokens[`player${p}`];
     for (const tokenKey in playerTokens) {
       const token = playerTokens[tokenKey];
-      if (token.element && token.active && !token.finished) {
+      if (token.element) {
         updateTokenZIndex(token.element, token.position);
       }
     }
@@ -382,6 +382,9 @@ function initializePlayerTokens(player, playerNumber) {
     tokenElement.dataset.y = y;
     tokenElement.dataset.player = playerNumber;
     tokenElement.dataset.tokenNumber = index + 1;
+
+    // Initialize z-index based on --data-x value
+    tokenElement.style.zIndex = x;
 
     const tokenInnerElement = document.createElement("div");
     tokenInnerElement.classList.add("token-inner");
@@ -530,6 +533,9 @@ async function slideTokenBackToHome(capturedTokenInfo) {
     capturedToken.element.style.setProperty("--data-x", x);
     capturedToken.element.style.setProperty("--data-y", y);
 
+    // Update z-index based on new --data-x value
+    updateTokenZIndex(capturedToken.element, capturedToken.position);
+
     // Fast and smooth animation for slide effect
     await sleep(50);
   }
@@ -539,6 +545,9 @@ async function slideTokenBackToHome(capturedTokenInfo) {
   capturedToken.element.dataset.y = initialPos[1];
   capturedToken.element.style.setProperty("--data-x", initialPos[0]);
   capturedToken.element.style.setProperty("--data-y", initialPos[1]);
+
+  // Update z-index for final home position
+  updateTokenZIndex(capturedToken.element, capturedToken.position);
 
   // Reset token state
   capturedToken.position = -1;
@@ -974,6 +983,9 @@ async function executeMoveToken(
 
       tokenElement.style.setProperty("--data-x", x);
       tokenElement.style.setProperty("--data-y", y);
+
+      // Update z-index based on new --data-x value
+      updateTokenZIndex(tokenElement, tokenData.position);
     }
 
     // Removed finish message for immediate gameplay
@@ -1415,6 +1427,9 @@ const debugFunctions = {
         token.element.style.setProperty("--data-y", initialPos[1]);
         token.element.dataset.x = initialPos[0];
         token.element.dataset.y = initialPos[1];
+
+        // Reset z-index based on initial --data-x value
+        token.element.style.zIndex = initialPos[0];
 
         // Reset visual classes
         token.element.classList.remove(

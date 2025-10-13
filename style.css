@@ -12,7 +12,7 @@
   color: #00bfff;
 }
 .player-3 {
-  color: #6fd66b;
+  color: #41e500;
 }
 .player-4 {
   color: #ffc800;
@@ -235,7 +235,6 @@ main {
 /* Token styles */
 .token {
   position: absolute;
-  z-index: 10;
   width: calc(100% / 15);
   aspect-ratio: 1 / 1;
   left: calc((100% / 15) * var(--data-y));
@@ -252,11 +251,11 @@ main {
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     background-color: currentColor;
-    border: 0.1em solid whitesmoke;
+    outline: 4px solid whitesmoke;
     transition: all 0.3s ease;
 
     & img {
-      filter: drop-shadow(0px 12px 6px rgba(0, 0, 0, 0.2));
+      /* filter: drop-shadow(0px 12px 6px rgba(0, 0, 0, 0.2)); */
       height: 0;
       position: absolute;
       bottom: 50%;
@@ -266,14 +265,13 @@ main {
     }
   }
 
-  &.safe .token-inner {
-    border-color: midnightblue;
-    /* box-shadow: 0 0 10px gold; */
-  }
+  /* &.safe .token-inner {
+    outline: midnightblue;
+    box-shadow: 0 0 10px gold;
+  } */
 
   /* Moveable token popup effect */
   &.moveable {
-    z-index: 30; /* Highest priority - always on top when stacked */
     /* Create popup effect with minimum 44px touch target */
     &::before {
       content: "";

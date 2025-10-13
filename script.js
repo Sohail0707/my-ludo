@@ -773,10 +773,10 @@ function nextTurn() {
   // Clear visual highlights
   clearTokenHighlights();
 
-  if (!hasRolledSix) {
-    // Store the previous player to check if turn actually changes
-    const previousPlayer = currentPlayer;
+  const previousPlayer = currentPlayer;
+  let playerChanged = false;
 
+  if (!hasRolledSix) {
     // Move to next active player (skip finished players)
     let attempts = 0;
     const maxAttempts = playerCount;
@@ -796,8 +796,9 @@ function nextTurn() {
       }
     } while (finishedPlayers.has(currentPlayer) && attempts < maxAttempts);
 
-    // Reset consecutive sixes counter when turn changes to a different player
+    // Check if turn actually changed to a different player
     if (currentPlayer !== previousPlayer) {
+      playerChanged = true;
       consecutiveSixes[`player${currentPlayer}`] = 0;
       console.log(
         `🔄 Turn changed to Player ${currentPlayer} - consecutive sixes reset`
@@ -807,21 +808,25 @@ function nextTurn() {
 
   hasRolledSix = false;
   gameState = "waiting";
-  updateCurrentPlayerDisplay();
-  // Removed turn announcement message for immediate switching
+
+  // Only show flush effect if turn actually changed to a different player
+  if (playerChanged) {
+    updateCurrentPlayerDisplay();
+  } else {
+    // Same player continuing - just move dice, no flush effect
+    moveDiceToCurrentPlayer();
+  }
 }
 
 function updateCurrentPlayerDisplay() {
-  // Remove current player highlight from all homes
-  document.querySelectorAll(".home").forEach((home) => {
-    home.classList.remove("current-player");
-  });
+  const mainContainer = document.querySelector(".main-container");
+  if (!mainContainer) return;
 
-  // Add highlight to current player's home
-  const currentHome = document.querySelector(`.home.player-${currentPlayer}`);
-  if (currentHome) {
-    currentHome.classList.add("current-player");
-  }
+  // Remove all flush classes
+  mainContainer.classList.remove("flush-1", "flush-2", "flush-3", "flush-4");
+
+  // Add the flush class for current player
+  mainContainer.classList.add(`flush-${currentPlayer}`);
 
   // Move dice to current player's control box
   moveDiceToCurrentPlayer();
@@ -890,55 +895,57 @@ function rollDice() {
 
   gameState = "rolling";
 
-  // Get dice value with consecutive sixes check
-  diceValue = rollDiceWithSixesLimit();
+  // Remove flush class when dice starts shuffling
+  const mainContainer = document.querySelector(".main-container");
+  if (mainContainer) {
+    mainContainer.classList.remove("flush-1", "flush-2", "flush-3", "flush-4");
+  }
 
-  // Show the dice face
-  if (window.showDiceFace) {
-    showDiceFace(diceValue);
+  // Generate a valid dice value first (respecting consecutive sixes rule)
+  const validDiceValue = generateValidDiceValue();
+
+  // Use the shuffle animation with our pre-determined valid value
+  if (window.shuffleCube) {
+    diceValue = window.shuffleCube(validDiceValue); // Pass our valid value
+  } else {
+    // Fallback if shuffleCube is not available
+    diceValue = validDiceValue;
+    if (window.showDiceFace) {
+      showDiceFace(diceValue);
+    }
   }
 
   // After dice animation, check for moveable tokens
   setTimeout(() => {
     processDiceResult();
-  }, 1500); // Increased timeout to allow for potential re-rolls
+  }, 1000); // Standard timeout for dice animation
 }
 
-function rollDiceWithSixesLimit() {
+function generateValidDiceValue() {
   let rolledValue;
   let attempts = 0;
   const maxAttempts = 10; // Prevent infinite loops
 
   do {
-    // Use the shuffle animation and get the dice value
-    if (window.shuffleCube) {
-      rolledValue = window.shuffleCube();
-    } else {
-      // Fallback if shuffleCube is not available
-      rolledValue = Math.floor(Math.random() * 6) + 1;
-    }
-
+    // Generate random dice value (no animation here)
+    rolledValue = Math.floor(Math.random() * 6) + 1;
     attempts++;
 
     // Check if this would be the third consecutive six
     if (rolledValue === 6 && consecutiveSixes[`player${currentPlayer}`] >= 2) {
       console.log(
-        `🎲 Player ${currentPlayer} rolled third consecutive 6 - forcing re-roll (attempt ${attempts})`
-      );
-      showMessage(
-        `🎲 Player ${currentPlayer}: Third 6 in a row! Re-rolling...`,
-        "warning"
+        `🎲 Player ${currentPlayer} would roll third consecutive 6 - re-generating (attempt ${attempts})`
       );
 
-      // Small delay before re-roll for visual feedback
       if (attempts < maxAttempts) {
-        continue; // Re-roll
+        continue; // Re-generate
       } else {
         // Fallback: force a non-6 value if too many attempts
         rolledValue = Math.floor(Math.random() * 5) + 1;
         console.log(
-          `⚠️ Max re-roll attempts reached, forcing value: ${rolledValue}`
+          `⚠️ Max generation attempts reached, forcing value: ${rolledValue}`
         );
+        showMessage(`🎲 Player ${currentPlayer}: Third 6 avoided!`, "warning");
         break;
       }
     } else {
@@ -964,7 +971,6 @@ function processDiceResult() {
 
   gameState = "moving";
   moveableTokens = findMoveableTokens(currentPlayer);
-
   if (moveableTokens.length === 0) {
     nextTurn(); // Immediate transition to next player
   } else if (moveableTokens.length === 1) {

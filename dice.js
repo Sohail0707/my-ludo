@@ -78,13 +78,13 @@ window.showDiceFace = showDiceFace;
 window.shuffleCube = shuffleCube;
 
 // Function to shuffle the cube with random face selections
-function shuffleCube() {
+function shuffleCube(predeterminedValue = null) {
   const outerCube = document.querySelector(".outer-cube");
   const cubeContainer = document.querySelector(".cube-container");
   const diceContainer = document.querySelector(".dice-container");
 
-  // Generate the final dice number that will be used for the game
-  const finalDiceValue = generateVeryRandomDiceNumber();
+  // Use predetermined value if provided, otherwise generate random
+  const finalDiceValue = predeterminedValue || generateVeryRandomDiceNumber();
   // Generate first random face for shuffle animation (different from final)
   let firstRandomFace = generateVeryRandomDiceNumber();
   // Ensure first face is different from final for better visual effect

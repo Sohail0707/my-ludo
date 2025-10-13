@@ -57,9 +57,6 @@ function executeShowDiceFace(faceNumber) {
 
   // Apply the rotation
   cube.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-
-  // Log the current face
-  console.log(`Showing dice face: ${faceNumber}`);
 }
 
 // Modified showDiceFace function that uses the queue
@@ -126,10 +123,6 @@ function shuffleCube(predeterminedValue = null) {
       ""
     );
     cube.style.transform = currentTransform;
-
-    console.log(
-      `🎯 Cube shuffle complete! Showing final dice value: ${finalDiceValue}`
-    );
 
     // Show the final dice value
     executeShowDiceFace(finalDiceValue);

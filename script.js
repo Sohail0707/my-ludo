@@ -26,12 +26,6 @@ function calculateOptimalBoardSize() {
   const finalGridUnit = Math.floor(finalSize / 15);
   const responsiveBoardSize = finalGridUnit * 15;
 
-  console.log(`🎮 Board size calculation:
-    Viewport: ${viewportWidth}x${viewportHeight}
-    Available: ${availableSize}px
-    Grid unit: ${finalGridUnit}px
-    Final board: ${responsiveBoardSize}px`);
-
   return responsiveBoardSize;
 }
 
@@ -60,13 +54,6 @@ function setResponsiveDiceSize(boardSize) {
     `${dicePadding}px`
   );
   document.documentElement.style.setProperty("--dot-size", `${dotSize}px`);
-
-  console.log(`🎲 Dice size calculation:
-    Board size: ${boardSize}px
-    Dice size: ${diceSize}px
-    Dice half: ${diceHalf}px  
-    Padding: ${dicePadding}px
-    Dot size: ${dotSize}px`);
 }
 
 // Set initial board size
@@ -329,12 +316,6 @@ function updateTokenZIndex(tokenElement, position) {
 
   const finalZIndex = baseZIndex + moveableBonus;
   tokenElement.style.zIndex = finalZIndex;
-
-  console.log(
-    `🔧 Token z-index updated: --data-x=${dataX}, base z-index=${baseZIndex}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
-      "moveable"
-    )}`
-  );
 }
 function updateAllTokenZIndices() {
   // Update z-index for all active tokens based on their --data-x values
@@ -413,10 +394,6 @@ function findMoveableTokens(playerNumber) {
   const playerTokens = tokens[`player${playerNumber}`];
   const moveableTokens = [];
 
-  console.log(
-    `🔍 Finding moveable tokens for Player ${playerNumber}, dice: ${diceValue}`
-  );
-
   for (const tokenKey in playerTokens) {
     const token = playerTokens[tokenKey];
 
@@ -428,7 +405,6 @@ function findMoveableTokens(playerNumber) {
         canMove: true,
         reason: "exit_home",
       });
-      console.log(`✅ ${tokenKey}: Can exit home (dice=6)`);
     }
     // If token is on board and won't exceed the path
     else if (token.active && !token.finished) {
@@ -436,10 +412,6 @@ function findMoveableTokens(playerNumber) {
       const newPosition = token.position + diceValue;
       const pathLength = playerData.positions.length;
       const finishPosition = pathLength - 1; // Last index in positions array is the finish
-
-      console.log(
-        `🔍 ${tokenKey}: position=${token.position}, dice=${diceValue}, newPosition=${newPosition}, pathLength=${pathLength}, finishPosition=${finishPosition}`
-      );
 
       // Token can only move if:
       // 1. It stays within the path (normal move)
@@ -451,7 +423,6 @@ function findMoveableTokens(playerNumber) {
           canMove: true,
           reason: "normal_move",
         });
-        console.log(`✅ ${tokenKey}: Can make normal move`);
       } else if (newPosition === finishPosition) {
         // Token can finish only if it lands EXACTLY on the finish position
         moveableTokens.push({
@@ -460,24 +431,14 @@ function findMoveableTokens(playerNumber) {
           canMove: true,
           reason: "finish",
         });
-        console.log(`✅ ${tokenKey}: Can finish (exact position)`);
       } else {
         // If newPosition > finishPosition, token cannot move
-        console.log(
-          `❌ ${tokenKey}: Cannot move - would overshoot (${newPosition} > ${finishPosition})`
-        );
       }
       // This prevents overshooting the finish line
     } else {
-      console.log(
-        `⏭️ ${tokenKey}: Skipped - active=${token.active}, finished=${token.finished}`
-      );
     }
   }
 
-  console.log(
-    `🎯 Player ${playerNumber} moveable tokens: ${moveableTokens.length}`
-  );
   return moveableTokens;
 }
 
@@ -676,9 +637,6 @@ function checkWinCondition(playerNumber) {
         `🎉 Player ${playerNumber} finishes in ${position} place! 🎉`,
         "success"
       );
-
-      console.log(`🏆 Player ${playerNumber} finished in ${position} place`);
-      console.log(`📊 Current rankings:`, playerRankings);
     }
 
     // Check if game should end
@@ -764,7 +722,6 @@ function showFinalResults() {
   }
 
   showMessage(resultsMessage, "success");
-  console.log("🎮 Game finished with rankings:", playerRankings);
 }
 
 function nextTurn() {
@@ -791,7 +748,6 @@ function nextTurn() {
 
       // Safety check to prevent infinite loop
       if (attempts >= maxAttempts) {
-        console.warn("All players finished or error in player switching");
         break;
       }
     } while (finishedPlayers.has(currentPlayer) && attempts < maxAttempts);
@@ -800,9 +756,6 @@ function nextTurn() {
     if (currentPlayer !== previousPlayer) {
       playerChanged = true;
       consecutiveSixes[`player${currentPlayer}`] = 0;
-      console.log(
-        `🔄 Turn changed to Player ${currentPlayer} - consecutive sixes reset`
-      );
     }
   }
 
@@ -836,7 +789,6 @@ function moveDiceToCurrentPlayer() {
   // Find the dice container
   const diceContainer = document.querySelector(".dice-container");
   if (!diceContainer) {
-    console.warn("Dice container not found");
     return;
   }
 
@@ -845,7 +797,6 @@ function moveDiceToCurrentPlayer() {
     `.player-control.player-${currentPlayer}`
   );
   if (!currentPlayerControl) {
-    console.warn(`Player control box for player ${currentPlayer} not found`);
     return;
   }
 
@@ -857,8 +808,6 @@ function moveDiceToCurrentPlayer() {
   // Remove dice from current location and add to current player's control
   diceContainer.remove();
   currentPlayerControl.appendChild(diceContainer);
-
-  console.log(`🎲 Dice moved to Player ${currentPlayer}'s control box`);
 }
 
 function clearTokenHighlights() {
@@ -889,7 +838,6 @@ function rollDice() {
 
   // Prevent finished players from rolling
   if (finishedPlayers.has(currentPlayer)) {
-    console.log(`Player ${currentPlayer} has already finished and cannot roll`);
     return;
   }
 
@@ -933,18 +881,12 @@ function generateValidDiceValue() {
 
     // Check if this would be the third consecutive six
     if (rolledValue === 6 && consecutiveSixes[`player${currentPlayer}`] >= 2) {
-      console.log(
-        `🎲 Player ${currentPlayer} would roll third consecutive 6 - re-generating (attempt ${attempts})`
-      );
-
       if (attempts < maxAttempts) {
         continue; // Re-generate
       } else {
         // Fallback: force a non-6 value if too many attempts
         rolledValue = Math.floor(Math.random() * 5) + 1;
-        console.log(
-          `⚠️ Max generation attempts reached, forcing value: ${rolledValue}`
-        );
+
         showMessage(`🎲 Player ${currentPlayer}: Third 6 avoided!`, "warning");
         break;
       }
@@ -960,11 +902,6 @@ function processDiceResult() {
   // Update consecutive sixes counter
   if (diceValue === 6) {
     consecutiveSixes[`player${currentPlayer}`]++;
-    console.log(
-      `🎲 Player ${currentPlayer} rolled 6! Consecutive sixes: ${
-        consecutiveSixes[`player${currentPlayer}`]
-      }`
-    );
   } else {
     consecutiveSixes[`player${currentPlayer}`] = 0; // Reset counter for non-6 rolls
   }
@@ -1126,673 +1063,3 @@ showMessage(
   `Game started! Player ${currentPlayer}'s turn. Click the dice to roll.`,
   "info"
 );
-
-// =============================================================================
-// DEBUG FUNCTIONS - COMPREHENSIVE TESTING SYSTEM
-// =============================================================================
-
-const debugFunctions = {
-  // Toggle debug panel visibility
-  togglePanel() {
-    const panel = document.getElementById("debug-panel");
-    panel.classList.toggle("open");
-  },
-
-  // Create multiple tokens stacked in same position
-  createStackedTokens() {
-    console.log("🛠️ Debug: Creating stacked tokens scenario");
-
-    // Clear any existing highlights
-    this.clearDebugHighlights();
-
-    // Position multiple tokens from different players at the same board position
-    const targetPosition = 10; // Middle of the path
-    const targetCoords = player1.positions[targetPosition];
-
-    // Get tokens from different players
-    const player1Token = tokens.player1.token1;
-    const player3Token = tokens.player3.token1;
-
-    // Move them to the same position on the board
-    this.moveTokenToPosition(player1Token, 1, targetPosition, targetCoords);
-    this.moveTokenToPosition(player3Token, 3, targetPosition, targetCoords);
-
-    // Highlight the stacked tokens
-    player1Token.element.classList.add("debug-highlight");
-    player3Token.element.classList.add("debug-highlight");
-
-    showMessage("🛠️ Debug: Created stacked tokens at position 10", "info");
-
-    // Log the scenario
-    this.logDebugScenario("Stacked Tokens", {
-      position: targetPosition,
-      coordinates: targetCoords,
-      tokensInvolved: ["Player 1 Token 1", "Player 3 Token 1"],
-    });
-  },
-
-  // Create chase scenario - one token just behind another
-  createChaseScenario() {
-    console.log("🛠️ Debug: Creating chase scenario");
-
-    this.clearDebugHighlights();
-
-    // Position tokens in chase formation
-    const leadPosition = 15;
-    const chasePosition = 14;
-
-    const leadToken = tokens.player1.token1;
-    const chaseToken = tokens.player3.token1;
-
-    // Move lead token
-    this.moveTokenToPosition(
-      leadToken,
-      1,
-      leadPosition,
-      player1.positions[leadPosition]
-    );
-
-    // Move chasing token
-    this.moveTokenToPosition(
-      chaseToken,
-      3,
-      chasePosition,
-      player3.positions[chasePosition]
-    );
-
-    // Highlight tokens
-    leadToken.element.classList.add("debug-highlight");
-    chaseToken.element.classList.add("debug-highlight");
-
-    showMessage("🛠️ Debug: Chase scenario - Player 3 chasing Player 1", "info");
-
-    this.logDebugScenario("Chase Scenario", {
-      leadToken: { player: 1, position: leadPosition },
-      chaseToken: { player: 3, position: chasePosition },
-      distance: leadPosition - chasePosition,
-    });
-  },
-
-  // Create attack scenario - token in position to capture another
-  createAttackScenario() {
-    console.log("🛠️ Debug: Creating attack scenario");
-
-    this.clearDebugHighlights();
-
-    // Position vulnerable token
-    const vulnerablePosition = 20;
-    const attackerPosition = 15; // 5 steps away - perfect for a 5 or 6 roll
-
-    const vulnerableToken = tokens.player1.token1;
-    const attackerToken = tokens.player3.token1;
-
-    // Move vulnerable token to unsafe position
-    this.moveTokenToPosition(
-      vulnerableToken,
-      1,
-      vulnerablePosition,
-      player1.positions[vulnerablePosition]
-    );
-    vulnerableToken.safe = false;
-    vulnerableToken.element.classList.remove("safe");
-
-    // Move attacker to striking distance
-    this.moveTokenToPosition(
-      attackerToken,
-      3,
-      attackerPosition,
-      player3.positions[attackerPosition]
-    );
-
-    // Highlight tokens
-    vulnerableToken.element.classList.add("debug-highlight");
-    attackerToken.element.classList.add("debug-highlight");
-
-    // Set current player to attacker and force a good dice roll
-    currentPlayer = 3;
-    updateCurrentPlayerDisplay();
-    diceValue = 5; // Perfect for attack
-
-    showMessage(
-      "🛠️ Debug: Attack scenario ready - Player 3 can capture Player 1",
-      "warning"
-    );
-
-    this.logDebugScenario("Attack Scenario", {
-      vulnerable: { player: 1, position: vulnerablePosition, safe: false },
-      attacker: { player: 3, position: attackerPosition },
-      diceNeeded: vulnerablePosition - attackerPosition,
-      currentDice: diceValue,
-    });
-  },
-
-  // Send a token back to home area
-  sendTokenHome() {
-    console.log("🛠️ Debug: Sending token home");
-
-    this.clearDebugHighlights();
-
-    // Find an active token to send home
-    const activeToken = this.findActiveToken();
-
-    if (activeToken) {
-      const { token, player, tokenKey } = activeToken;
-
-      // Use the existing capture animation
-      const captureInfo = {
-        player: player,
-        token: token,
-        tokenKey: tokenKey,
-      };
-
-      // Highlight before sending home
-      token.element.classList.add("debug-highlight");
-
-      setTimeout(() => {
-        slideTokenBackToHome(captureInfo);
-        showMessage(`🛠️ Debug: Player ${player} token sent home!`, "warning");
-      }, 1000);
-
-      this.logDebugScenario("Send Token Home", {
-        player: player,
-        tokenKey: tokenKey,
-        fromPosition: token.position,
-      });
-    } else {
-      showMessage("🛠️ Debug: No active tokens found to send home", "error");
-    }
-  },
-
-  // Create finish line scenario - token near the end
-  createFinishLineScenario() {
-    console.log("🛠️ Debug: Creating finish line scenario");
-
-    this.clearDebugHighlights();
-
-    // Position tokens near the finish line
-    const playerData = getPlayerData(1);
-    const pathLength = playerData.positions.length; // Total path positions
-    const finishPosition = pathLength - 1; // Last index is the actual finish position
-
-    // Position tokens at different distances from finish
-    const token1 = tokens.player1.token1;
-    const token2 = tokens.player1.token2;
-
-    // Token 1: Exactly 1 step before finish (can win with dice = 1)
-    const oneStepBeforeFinish = finishPosition - 1;
-    this.moveTokenToPosition(
-      token1,
-      1,
-      oneStepBeforeFinish,
-      playerData.positions[oneStepBeforeFinish]
-    );
-
-    // Token 2: Exactly 3 steps before finish (can only win with dice = 3)
-    const threeStepsBeforeFinish = finishPosition - 3;
-    this.moveTokenToPosition(
-      token2,
-      1,
-      threeStepsBeforeFinish,
-      playerData.positions[threeStepsBeforeFinish]
-    );
-
-    // Highlight both tokens
-    token1.element.classList.add("debug-highlight");
-    token2.element.classList.add("debug-highlight");
-
-    // Set current player to player 1
-    currentPlayer = 1;
-    updateCurrentPlayerDisplay();
-
-    showMessage(
-      "🛠️ Debug: Finish line scenario - Test with different dice values!",
-      "info"
-    );
-
-    this.logDebugScenario("Finish Line Scenario", {
-      token1: {
-        position: oneStepBeforeFinish,
-        needsToFinish: 1,
-        canWinWith: [1],
-      },
-      token2: {
-        position: threeStepsBeforeFinish,
-        needsToFinish: 3,
-        canWinWith: [3],
-        cannotWinWith: [4, 5, 6],
-      },
-      pathLength: pathLength,
-      finishPosition: finishPosition,
-    });
-  },
-
-  // Create Player 2 specific finish line test (like in the screenshot)
-  testPlayer2FinishLine() {
-    console.log("🛠️ Debug: Testing Player 2 finish line scenario");
-
-    this.clearDebugHighlights();
-
-    // Position Player 2 token exactly like in the screenshot
-    const playerData = getPlayerData(2);
-    const pathLength = playerData.positions.length; // Should be 57 positions (0-56)
-    const finishPosition = pathLength - 1; // Last index is the actual finish position
-
-    console.log(`Player 2 path length: ${pathLength}`);
-    console.log(`Player 2 finish position: ${finishPosition}`);
-
-    // If token needs exactly 1 to finish, it should be 1 step before the finish position
-    const needsOneToFinish = finishPosition - 1; // One step before finish position
-    const token = tokens.player2.token1;
-
-    this.moveTokenToPosition(
-      token,
-      2,
-      needsOneToFinish,
-      playerData.positions[needsOneToFinish]
-    );
-
-    // Highlight the token
-    token.element.classList.add("debug-highlight");
-
-    // Set current player to player 2
-    currentPlayer = 2;
-    updateCurrentPlayerDisplay();
-
-    showMessage(
-      "🛠️ Debug: Player 2 needs exactly 1 to finish - test with dice 2+!",
-      "warning"
-    );
-
-    this.logDebugScenario("Player 2 Finish Line Test", {
-      player: 2,
-      tokenPosition: needsOneToFinish,
-      pathLength: pathLength,
-      needsToFinish: 1, // needs exactly 1 to finish
-      canWinWith: [1],
-      cannotWinWith: [2, 3, 4, 5, 6],
-      finishPosition: finishPosition,
-      calculation: `position ${needsOneToFinish} + dice 1 = ${
-        needsOneToFinish + 1
-      } (finish at ${finishPosition})`,
-    });
-  },
-
-  // Force specific dice values
-  setDiceValue(value) {
-    diceValue = value;
-    if (window.showDiceFace) {
-      showDiceFace(value);
-    }
-    showMessage(`🛠️ Debug: Dice forced to ${value}`, "info");
-    console.log(`🛠️ Debug: Dice value set to ${value}`);
-  },
-
-  // Switch to specific player
-  switchPlayer(playerNum) {
-    currentPlayer = playerNum;
-    gameState = "waiting";
-    hasRolledSix = false;
-    updateCurrentPlayerDisplay();
-    showMessage(`🛠️ Debug: Switched to Player ${playerNum}`, "info");
-    console.log(`🛠️ Debug: Current player changed to ${playerNum}`);
-  },
-
-  // Show comprehensive game state
-  showGameState() {
-    const gameStateInfo = {
-      currentPlayer: currentPlayer,
-      gameState: gameState,
-      diceValue: diceValue,
-      hasRolledSix: hasRolledSix,
-      playerTokens: {},
-    };
-
-    // Collect token states for all players
-    for (let p = 1; p <= 4; p++) {
-      const playerTokens = tokens[`player${p}`];
-      gameStateInfo.playerTokens[`player${p}`] = {};
-
-      for (const tokenKey in playerTokens) {
-        const token = playerTokens[tokenKey];
-        gameStateInfo.playerTokens[`player${p}`][tokenKey] = {
-          position: token.position,
-          active: token.active,
-          safe: token.safe,
-          finished: token.finished,
-        };
-      }
-    }
-
-    // Display in a formatted way
-    const formattedInfo = JSON.stringify(gameStateInfo, null, 2);
-    console.log("🛠️ Debug: Current Game State:", gameStateInfo);
-
-    // Create a temporary info display
-    this.showInfoPanel("Current Game State", formattedInfo);
-  },
-
-  // Reset game to initial state
-  resetGame() {
-    console.log("🛠️ Debug: Resetting game");
-
-    // Reset game variables
-    currentPlayer = 1;
-    diceValue = 0;
-    gameState = "waiting";
-    hasRolledSix = false;
-    moveableTokens = [];
-
-    // Reset consecutive sixes counters
-    consecutiveSixes = {
-      player1: 0,
-      player2: 0,
-      player3: 0,
-      player4: 0,
-    };
-
-    // Reset ranking system
-    playerRankings = [];
-    finishedPlayers.clear();
-
-    // Reset all tokens to initial positions
-    for (let p = 1; p <= 4; p++) {
-      const playerTokens = tokens[`player${p}`];
-      const playerData = getPlayerData(p);
-
-      for (const tokenKey in playerTokens) {
-        const token = playerTokens[tokenKey];
-        const tokenIndex = parseInt(tokenKey.replace("token", "")) - 1;
-        const initialPos = playerData.initialPositions[tokenIndex];
-
-        // Reset token state
-        token.position = -1;
-        token.active = false;
-        token.safe = true;
-        token.finished = false;
-
-        // Reset visual position
-        token.element.style.setProperty("--data-x", initialPos[0]);
-        token.element.style.setProperty("--data-y", initialPos[1]);
-        token.element.dataset.x = initialPos[0];
-        token.element.dataset.y = initialPos[1];
-
-        // Reset z-index based on initial --data-x value + 2
-        token.element.style.zIndex = initialPos[0] + 2; // Reset visual classes
-        token.element.classList.remove(
-          "safe",
-          "moveable",
-          "finished",
-          "debug-highlight",
-          "sliding-back"
-        );
-      }
-    }
-
-    // Reset dice visual
-    if (window.showDiceFace) {
-      showDiceFace(1);
-    }
-
-    // Re-enable dice
-    const cube = document.querySelector(".cube");
-    if (cube) {
-      cube.style.pointerEvents = "auto";
-      cube.style.opacity = "1";
-    }
-
-    // Reset UI
-    updateCurrentPlayerDisplay();
-    clearTokenHighlights();
-
-    showMessage("🛠️ Debug: Game reset to initial state", "success");
-  },
-
-  // Helper function to move token to specific position
-  moveTokenToPosition(tokenData, playerNum, position, coordinates) {
-    if (!tokenData || !tokenData.element) return;
-
-    const [x, y] = coordinates;
-
-    // Update visual position
-    tokenData.element.style.setProperty("--data-x", x);
-    tokenData.element.style.setProperty("--data-y", y);
-    tokenData.element.dataset.x = x;
-    tokenData.element.dataset.y = y;
-
-    // Update token state
-    tokenData.position = position;
-    tokenData.active = true;
-    tokenData.safe = safe_index.includes(position);
-    tokenData.finished = false;
-
-    // Update visual classes
-    if (tokenData.safe) {
-      tokenData.element.classList.add("safe");
-    } else {
-      tokenData.element.classList.remove("safe");
-    }
-
-    // Update z-index based on position
-    updateTokenZIndex(tokenData.element, position);
-
-    console.log(
-      `🛠️ Debug: Moved Player ${playerNum} token to position ${position} at coordinates [${x}, ${y}]`
-    );
-  },
-
-  // Find an active token for testing
-  findActiveToken() {
-    for (let p = 1; p <= 4; p++) {
-      const playerTokens = tokens[`player${p}`];
-      for (const tokenKey in playerTokens) {
-        const token = playerTokens[tokenKey];
-        if (token.active && !token.finished) {
-          return { token, player: p, tokenKey };
-        }
-      }
-    }
-    return null;
-  },
-
-  // Clear debug highlights
-  clearDebugHighlights() {
-    document.querySelectorAll(".token.debug-highlight").forEach((token) => {
-      token.classList.remove("debug-highlight");
-    });
-  },
-
-  // Log debug scenarios
-  logDebugScenario(scenarioName, details) {
-    console.log(`🛠️ Debug Scenario: ${scenarioName}`);
-    console.log("📊 Scenario Details:", details);
-    console.log("🎮 Current Game State:", {
-      currentPlayer,
-      gameState,
-      diceValue,
-      hasRolledSix,
-    });
-  },
-
-  // Show temporary info panel
-  showInfoPanel(title, content) {
-    // Remove existing info panel
-    const existingPanel = document.querySelector(".debug-info-overlay");
-    if (existingPanel) {
-      existingPanel.remove();
-    }
-
-    // Create new info panel
-    const overlay = document.createElement("div");
-    overlay.className = "debug-info-overlay";
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    `;
-
-    const panel = document.createElement("div");
-    panel.style.cssText = `
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 80%;
-      max-height: 80%;
-      overflow: auto;
-    `;
-
-    panel.innerHTML = `
-      <h3 style="margin: 0 0 15px 0; color: #333;">${title}</h3>
-      <div class="debug-info">${content}</div>
-      <button onclick="this.closest('.debug-info-overlay').remove()" 
-              style="margin-top: 15px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">
-        Close
-      </button>
-    `;
-
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    // Auto-close after 10 seconds
-    setTimeout(() => {
-      if (overlay.parentNode) {
-        overlay.remove();
-      }
-    }, 10000);
-  },
-
-  // Test board rotation for different players
-  testBoardRotation() {
-    console.log("🔄 Debug: Testing board rotation system");
-
-    let currentRotation = 1;
-    const rotationInterval = setInterval(() => {
-      // Update the global variable
-      window.BOTTOM_LEFT_PLAYER = currentRotation;
-
-      // Apply the rotation
-      setBoardRotation();
-
-      console.log(`🔄 Rotation test: Player ${currentRotation} at bottom-left`);
-
-      currentRotation++;
-      if (currentRotation > 4) {
-        currentRotation = 1;
-        clearInterval(rotationInterval);
-        console.log("🔄 Board rotation test completed - reset to Player 1");
-      }
-    }, 2000); // Change every 2 seconds
-  },
-
-  // Test dice movement between players
-  testDiceMovement() {
-    console.log("🎲 Debug: Testing dice movement between players");
-
-    let testPlayer = 1;
-    const moveInterval = setInterval(() => {
-      // Switch to the test player
-      currentPlayer = testPlayer;
-      updateCurrentPlayerDisplay();
-
-      console.log(`🎲 Dice moved to Player ${testPlayer}`);
-
-      testPlayer++;
-      if (testPlayer > 4) {
-        testPlayer = 1;
-        clearInterval(moveInterval);
-        console.log("🎲 Dice movement test completed - reset to Player 1");
-      }
-    }, 1500); // Change every 1.5 seconds
-  },
-
-  // Test ranking system - make a player finish immediately
-  testPlayerFinish(playerNum) {
-    console.log(`🏆 Debug: Making Player ${playerNum} finish`);
-
-    const playerTokens = tokens[`player${playerNum}`];
-
-    // Mark all tokens as finished
-    Object.values(playerTokens).forEach((token) => {
-      token.finished = true;
-      token.element.classList.add("finished");
-    });
-
-    // Trigger win condition check
-    checkWinCondition(playerNum);
-  },
-
-  // Show current ranking status
-  showRankings() {
-    let rankingInfo = "🏆 CURRENT RANKINGS 🏆\n\n";
-
-    if (playerRankings.length === 0) {
-      rankingInfo += "No players have finished yet.\n";
-    } else {
-      playerRankings.forEach((player, index) => {
-        const position = getPositionText(index + 1);
-        rankingInfo += `${position}: Player ${player}\n`;
-      });
-    }
-
-    rankingInfo += `\nFinished players: ${
-      Array.from(finishedPlayers).join(", ") || "None"
-    }`;
-    rankingInfo += `\nPlayers still playing: ${[1, 2, 3, 4]
-      .filter((p) => !finishedPlayers.has(p))
-      .join(", ")}`;
-
-    this.showInfoPanel("Ranking Status", rankingInfo);
-  },
-};
-
-// Make debug functions globally available
-window.debugFunctions = debugFunctions;
-window.setBoardRotation = setBoardRotation;
-
-// Add keyboard shortcuts for debug functions
-document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.shiftKey) {
-    switch (e.key) {
-      case "D":
-        debugFunctions.togglePanel();
-        e.preventDefault();
-        break;
-      case "S":
-        debugFunctions.createStackedTokens();
-        e.preventDefault();
-        break;
-      case "C":
-        debugFunctions.createChaseScenario();
-        e.preventDefault();
-        break;
-      case "A":
-        debugFunctions.createAttackScenario();
-        e.preventDefault();
-        break;
-      case "F":
-        debugFunctions.createFinishLineScenario();
-        e.preventDefault();
-        break;
-      case "R":
-        debugFunctions.resetGame();
-        e.preventDefault();
-        break;
-    }
-  }
-});
-
-console.log("🛠️ Debug System Loaded!");
-console.log("🔧 Keyboard shortcuts:");
-console.log("   Ctrl+Shift+D: Toggle debug panel");
-console.log("   Ctrl+Shift+S: Create stacked tokens");
-console.log("   Ctrl+Shift+C: Create chase scenario");
-console.log("   Ctrl+Shift+A: Create attack scenario");
-console.log("   Ctrl+Shift+F: Create finish line scenario");
-console.log("   Ctrl+Shift+R: Reset game");

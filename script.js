@@ -85,6 +85,14 @@ let gameState = "waiting"; // "waiting", "rolling", "moving", "finished"
 let hasRolledSix = false;
 let moveableTokens = [];
 
+// Consecutive sixes tracking for each player
+let consecutiveSixes = {
+  player1: 0,
+  player2: 0,
+  player3: 0,
+  player4: 0,
+};
+
 // Ranking System
 let playerRankings = []; // Array to store players in finishing order [1st, 2nd, 3rd]
 let finishedPlayers = new Set(); // Set to track which players have finished
@@ -314,20 +322,20 @@ function updateTokenZIndex(tokenElement, position) {
   // Get the --data-x value from the token element
   const dataX = parseInt(tokenElement.style.getPropertyValue("--data-x")) || 0;
 
-  // Use --data-x as the z-index directly
+  // Use --data-x + 2 as the base z-index to ensure it's always positive
   // Add extra boost for moveable tokens to ensure they're always on top
+  const baseZIndex = dataX + 2;
   const moveableBonus = tokenElement.classList.contains("moveable") ? 1000 : 0;
 
-  const finalZIndex = dataX + moveableBonus;
+  const finalZIndex = baseZIndex + moveableBonus;
   tokenElement.style.zIndex = finalZIndex;
 
   console.log(
-    `🔧 Token z-index updated: --data-x=${dataX}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
+    `🔧 Token z-index updated: --data-x=${dataX}, base z-index=${baseZIndex}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
       "moveable"
     )}`
   );
 }
-
 function updateAllTokenZIndices() {
   // Update z-index for all active tokens based on their --data-x values
   for (let p = 1; p <= 4; p++) {
@@ -383,9 +391,8 @@ function initializePlayerTokens(player, playerNumber) {
     tokenElement.dataset.player = playerNumber;
     tokenElement.dataset.tokenNumber = index + 1;
 
-    // Initialize z-index based on --data-x value
-    tokenElement.style.zIndex = x;
-
+    // Initialize z-index based on --data-x value + 2
+    tokenElement.style.zIndex = x + 2;
     const tokenInnerElement = document.createElement("div");
     tokenInnerElement.classList.add("token-inner");
     tokenInnerElement.innerHTML = `<img src="assets/token${playerNumber}.svg" alt="P${playerNumber} Token ${
@@ -767,6 +774,9 @@ function nextTurn() {
   clearTokenHighlights();
 
   if (!hasRolledSix) {
+    // Store the previous player to check if turn actually changes
+    const previousPlayer = currentPlayer;
+
     // Move to next active player (skip finished players)
     let attempts = 0;
     const maxAttempts = playerCount;
@@ -785,6 +795,14 @@ function nextTurn() {
         break;
       }
     } while (finishedPlayers.has(currentPlayer) && attempts < maxAttempts);
+
+    // Reset consecutive sixes counter when turn changes to a different player
+    if (currentPlayer !== previousPlayer) {
+      consecutiveSixes[`player${currentPlayer}`] = 0;
+      console.log(
+        `🔄 Turn changed to Player ${currentPlayer} - consecutive sixes reset`
+      );
+    }
   }
 
   hasRolledSix = false;
@@ -872,49 +890,105 @@ function rollDice() {
 
   gameState = "rolling";
 
-  // Use the shuffle animation and get the dice value
-  if (window.shuffleCube) {
-    diceValue = window.shuffleCube();
-  } else {
-    // Fallback if shuffleCube is not available
-    diceValue = Math.floor(Math.random() * 6) + 1;
-    if (window.showDiceFace) {
-      showDiceFace(diceValue);
-    }
+  // Get dice value with consecutive sixes check
+  diceValue = rollDiceWithSixesLimit();
+
+  // Show the dice face
+  if (window.showDiceFace) {
+    showDiceFace(diceValue);
   }
 
   // After dice animation, check for moveable tokens
   setTimeout(() => {
-    gameState = "moving";
-    moveableTokens = findMoveableTokens(currentPlayer);
-
-    if (moveableTokens.length === 0) {
-      nextTurn(); // Immediate transition to next player
-    } else if (moveableTokens.length === 1) {
-      // Auto-move when only one token is moveable
-      const moveableToken = moveableTokens[0];
-      const tokenElement = moveableToken.token.element;
-      const playerNumber = parseInt(tokenElement.dataset.player);
-      const tokenNumber = parseInt(tokenElement.dataset.tokenNumber);
-
-      // Execute the move automatically
-      executeMoveToken(tokenElement, playerNumber, tokenNumber, moveableToken);
-
-      if (diceValue === 6) {
-        hasRolledSix = true;
-      }
-    } else {
-      highlightMoveableTokens(moveableTokens);
-      // Removed dice roll message for immediate gameplay
-
-      if (diceValue === 6) {
-        hasRolledSix = true;
-      }
-    }
-  }, 1000); // Reduced timeout since we're not calling showDiceFace separately
+    processDiceResult();
+  }, 1500); // Increased timeout to allow for potential re-rolls
 }
 
-// =============================================================================
+function rollDiceWithSixesLimit() {
+  let rolledValue;
+  let attempts = 0;
+  const maxAttempts = 10; // Prevent infinite loops
+
+  do {
+    // Use the shuffle animation and get the dice value
+    if (window.shuffleCube) {
+      rolledValue = window.shuffleCube();
+    } else {
+      // Fallback if shuffleCube is not available
+      rolledValue = Math.floor(Math.random() * 6) + 1;
+    }
+
+    attempts++;
+
+    // Check if this would be the third consecutive six
+    if (rolledValue === 6 && consecutiveSixes[`player${currentPlayer}`] >= 2) {
+      console.log(
+        `🎲 Player ${currentPlayer} rolled third consecutive 6 - forcing re-roll (attempt ${attempts})`
+      );
+      showMessage(
+        `🎲 Player ${currentPlayer}: Third 6 in a row! Re-rolling...`,
+        "warning"
+      );
+
+      // Small delay before re-roll for visual feedback
+      if (attempts < maxAttempts) {
+        continue; // Re-roll
+      } else {
+        // Fallback: force a non-6 value if too many attempts
+        rolledValue = Math.floor(Math.random() * 5) + 1;
+        console.log(
+          `⚠️ Max re-roll attempts reached, forcing value: ${rolledValue}`
+        );
+        break;
+      }
+    } else {
+      break; // Valid roll
+    }
+  } while (attempts < maxAttempts);
+
+  return rolledValue;
+}
+
+function processDiceResult() {
+  // Update consecutive sixes counter
+  if (diceValue === 6) {
+    consecutiveSixes[`player${currentPlayer}`]++;
+    console.log(
+      `🎲 Player ${currentPlayer} rolled 6! Consecutive sixes: ${
+        consecutiveSixes[`player${currentPlayer}`]
+      }`
+    );
+  } else {
+    consecutiveSixes[`player${currentPlayer}`] = 0; // Reset counter for non-6 rolls
+  }
+
+  gameState = "moving";
+  moveableTokens = findMoveableTokens(currentPlayer);
+
+  if (moveableTokens.length === 0) {
+    nextTurn(); // Immediate transition to next player
+  } else if (moveableTokens.length === 1) {
+    // Auto-move when only one token is moveable
+    const moveableToken = moveableTokens[0];
+    const tokenElement = moveableToken.token.element;
+    const playerNumber = parseInt(tokenElement.dataset.player);
+    const tokenNumber = parseInt(tokenElement.dataset.tokenNumber);
+
+    // Execute the move automatically
+    executeMoveToken(tokenElement, playerNumber, tokenNumber, moveableToken);
+
+    if (diceValue === 6) {
+      hasRolledSix = true;
+    }
+  } else {
+    highlightMoveableTokens(moveableTokens);
+    // Removed dice roll message for immediate gameplay
+
+    if (diceValue === 6) {
+      hasRolledSix = true;
+    }
+  }
+} // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
 
@@ -1402,6 +1476,14 @@ const debugFunctions = {
     hasRolledSix = false;
     moveableTokens = [];
 
+    // Reset consecutive sixes counters
+    consecutiveSixes = {
+      player1: 0,
+      player2: 0,
+      player3: 0,
+      player4: 0,
+    };
+
     // Reset ranking system
     playerRankings = [];
     finishedPlayers.clear();
@@ -1428,10 +1510,8 @@ const debugFunctions = {
         token.element.dataset.x = initialPos[0];
         token.element.dataset.y = initialPos[1];
 
-        // Reset z-index based on initial --data-x value
-        token.element.style.zIndex = initialPos[0];
-
-        // Reset visual classes
+        // Reset z-index based on initial --data-x value + 2
+        token.element.style.zIndex = initialPos[0] + 2; // Reset visual classes
         token.element.classList.remove(
           "safe",
           "moveable",

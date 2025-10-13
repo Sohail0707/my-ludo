@@ -85,6 +85,10 @@ let gameState = "waiting"; // "waiting", "rolling", "moving", "finished"
 let hasRolledSix = false;
 let moveableTokens = [];
 
+// Ranking System
+let playerRankings = []; // Array to store players in finishing order [1st, 2nd, 3rd]
+let finishedPlayers = new Set(); // Set to track which players have finished
+
 // Initialize the game board
 const container = document.querySelector(".board");
 // Create 72 grid items (15x15)
@@ -644,15 +648,107 @@ function checkWinCondition(playerNumber) {
     (token) => token.finished
   ).length;
 
+  // Check if player has finished all tokens
   if (finishedCount === 4) {
-    gameState = "finished";
-    showMessage(`🎉 Player ${playerNumber} WINS! 🎉`, "success");
+    // Player has finished - add to rankings if not already there
+    if (!finishedPlayers.has(playerNumber)) {
+      finishedPlayers.add(playerNumber);
+      playerRankings.push(playerNumber);
 
-    // Disable further dice rolls
-    const cube = document.querySelector(".cube");
+      const position = getPositionText(playerRankings.length);
+      showMessage(
+        `🎉 Player ${playerNumber} finishes in ${position} place! 🎉`,
+        "success"
+      );
+
+      console.log(`🏆 Player ${playerNumber} finished in ${position} place`);
+      console.log(`📊 Current rankings:`, playerRankings);
+    }
+
+    // Check if game should end
+    if (shouldEndGame()) {
+      endGame();
+    }
+  }
+}
+
+function getPositionText(position) {
+  switch (position) {
+    case 1:
+      return "1st";
+    case 2:
+      return "2nd";
+    case 3:
+      return "3rd";
+    case 4:
+      return "4th";
+    default:
+      return `${position}th`;
+  }
+}
+
+function shouldEndGame() {
+  // For 2-player game: End when first player wins
+  if (playerCount === 2) {
+    return playerRankings.length >= 1;
+  }
+
+  // For 4-player game: End when we have 1st, 2nd, and 3rd place
+  // (4th place is automatic for remaining player)
+  if (playerCount === 4) {
+    return playerRankings.length >= 3;
+  }
+
+  // For 3-player game: End when we have 1st and 2nd place
+  if (playerCount === 3) {
+    return playerRankings.length >= 2;
+  }
+
+  return false;
+}
+
+function endGame() {
+  gameState = "finished";
+
+  // Disable further dice rolls
+  const cube = document.querySelector(".cube");
+  if (cube) {
     cube.style.pointerEvents = "none";
     cube.style.opacity = "0.5";
   }
+
+  // Show final results
+  showFinalResults();
+}
+
+function showFinalResults() {
+  let resultsMessage = "🏆 FINAL RESULTS 🏆\n\n";
+
+  playerRankings.forEach((player, index) => {
+    const position = getPositionText(index + 1);
+    resultsMessage += `${position}: Player ${player}\n`;
+  });
+
+  // For 4-player game, determine 4th place automatically
+  if (playerCount === 4 && playerRankings.length === 3) {
+    const allPlayers = [1, 2, 3, 4];
+    const fourthPlace = allPlayers.find((p) => !finishedPlayers.has(p));
+    if (fourthPlace) {
+      resultsMessage += `4th: Player ${fourthPlace}\n`;
+    }
+  }
+
+  // For 3-player game, determine 3rd place automatically
+  if (playerCount === 3 && playerRankings.length === 2) {
+    const allPlayers = [1, 2, 3];
+    const thirdPlace = allPlayers.find((p) => !finishedPlayers.has(p));
+    if (thirdPlace) {
+      resultsMessage += `3rd: Player ${thirdPlace}\n`;
+    }
+  }
+
+  showMessage(resultsMessage, "success");
+  console.log("🎮 Game finished with rankings:", playerRankings);
 }
 
 function nextTurn() {
@@ -662,12 +758,24 @@ function nextTurn() {
   clearTokenHighlights();
 
   if (!hasRolledSix) {
-    // Move to next player
-    if (playerCount === 2) {
-      currentPlayer = currentPlayer === 1 ? 3 : 1;
-    } else {
-      currentPlayer = currentPlayer >= 4 ? 1 : currentPlayer + 1;
-    }
+    // Move to next active player (skip finished players)
+    let attempts = 0;
+    const maxAttempts = playerCount;
+
+    do {
+      if (playerCount === 2) {
+        currentPlayer = currentPlayer === 1 ? 3 : 1;
+      } else {
+        currentPlayer = currentPlayer >= 4 ? 1 : currentPlayer + 1;
+      }
+      attempts++;
+
+      // Safety check to prevent infinite loop
+      if (attempts >= maxAttempts) {
+        console.warn("All players finished or error in player switching");
+        break;
+      }
+    } while (finishedPlayers.has(currentPlayer) && attempts < maxAttempts);
   }
 
   hasRolledSix = false;
@@ -744,6 +852,12 @@ function highlightMoveableTokens(moveableTokens) {
 
 function rollDice() {
   if (gameState !== "waiting" || gameState === "finished") {
+    return;
+  }
+
+  // Prevent finished players from rolling
+  if (finishedPlayers.has(currentPlayer)) {
+    console.log(`Player ${currentPlayer} has already finished and cannot roll`);
     return;
   }
 
@@ -1276,6 +1390,10 @@ const debugFunctions = {
     hasRolledSix = false;
     moveableTokens = [];
 
+    // Reset ranking system
+    playerRankings = [];
+    finishedPlayers.clear();
+
     // Reset all tokens to initial positions
     for (let p = 1; p <= 4; p++) {
       const playerTokens = tokens[`player${p}`];
@@ -1312,6 +1430,13 @@ const debugFunctions = {
     // Reset dice visual
     if (window.showDiceFace) {
       showDiceFace(1);
+    }
+
+    // Re-enable dice
+    const cube = document.querySelector(".cube");
+    if (cube) {
+      cube.style.pointerEvents = "auto";
+      cube.style.opacity = "1";
     }
 
     // Reset UI
@@ -1484,6 +1609,45 @@ const debugFunctions = {
         console.log("🎲 Dice movement test completed - reset to Player 1");
       }
     }, 1500); // Change every 1.5 seconds
+  },
+
+  // Test ranking system - make a player finish immediately
+  testPlayerFinish(playerNum) {
+    console.log(`🏆 Debug: Making Player ${playerNum} finish`);
+
+    const playerTokens = tokens[`player${playerNum}`];
+
+    // Mark all tokens as finished
+    Object.values(playerTokens).forEach((token) => {
+      token.finished = true;
+      token.element.classList.add("finished");
+    });
+
+    // Trigger win condition check
+    checkWinCondition(playerNum);
+  },
+
+  // Show current ranking status
+  showRankings() {
+    let rankingInfo = "🏆 CURRENT RANKINGS 🏆\n\n";
+
+    if (playerRankings.length === 0) {
+      rankingInfo += "No players have finished yet.\n";
+    } else {
+      playerRankings.forEach((player, index) => {
+        const position = getPositionText(index + 1);
+        rankingInfo += `${position}: Player ${player}\n`;
+      });
+    }
+
+    rankingInfo += `\nFinished players: ${
+      Array.from(finishedPlayers).join(", ") || "None"
+    }`;
+    rankingInfo += `\nPlayers still playing: ${[1, 2, 3, 4]
+      .filter((p) => !finishedPlayers.has(p))
+      .join(", ")}`;
+
+    this.showInfoPanel("Ranking Status", rankingInfo);
   },
 };
 

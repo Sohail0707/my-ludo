@@ -29,12 +29,12 @@ main {
 
 .main-container {
   display: grid;
-  grid-template-columns: 2fr 1fr 2fr;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 2fr 1fr 2fr;
   grid-template-areas:
-    "player4 . player1"
-    "board board board"
-    "player3 . player2";
+    "player4 board player1"
+    ". board ."
+    "player3 board player2";
   align-items: center;
   gap: 32px;
 
@@ -53,7 +53,8 @@ main {
     }
 
     position: relative;
-    width: 50%;
+    height: 50%;
+    width: auto;
     aspect-ratio: 1 / 1;
     background-color: currentColor;
     margin: 0 auto;
@@ -546,9 +547,17 @@ main {
   }
 }
 
-/* @media (orientation: portrait) {
-  .board {
-    width: 100%;
-    height: auto;
+@media (orientation: portrait) {
+  .main-container {
+    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "player4 . player1"
+      "board board board"
+      "player3 . player2";
+    & .player-control {
+      width: 50%;
+      height: auto;
+    }
   }
-} */
+}

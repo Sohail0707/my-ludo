@@ -255,6 +255,10 @@ main {
     box-shadow: 0 0 10px gold;
   } */
 
+  &.finished .token-inner {
+    background-color: midnightblue;
+  }
+
   /* Moveable token popup effect */
   &.moveable {
     /* Create popup effect with minimum 44px touch target */

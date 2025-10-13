@@ -330,6 +330,90 @@ function updateAllTokenZIndices() {
   }
 }
 
+// =============================================================================
+// TOKEN OVERLAP MANAGEMENT
+// =============================================================================
+
+function updateTokenOverlaps() {
+  // First, clear all overlap classes from all tokens
+  clearAllOverlapClasses();
+
+  // Group tokens by their position coordinates
+  const positionGroups = {};
+
+  for (let p = 1; p <= 4; p++) {
+    const playerTokens = tokens[`player${p}`];
+    for (const tokenKey in playerTokens) {
+      const token = playerTokens[tokenKey];
+
+      // Only consider active tokens that are on the board (not at home and not finished)
+      if (token.element && token.active && !token.finished) {
+        const x = parseInt(token.element.dataset.x);
+        const y = parseInt(token.element.dataset.y);
+
+        // Skip if coordinates are invalid
+        if (isNaN(x) || isNaN(y)) {
+          continue;
+        }
+
+        const positionKey = `${x},${y}`;
+
+        if (!positionGroups[positionKey]) {
+          positionGroups[positionKey] = [];
+        }
+
+        positionGroups[positionKey].push({
+          element: token.element,
+          player: p,
+          tokenKey: tokenKey,
+          x: x,
+          y: y,
+        });
+      }
+    }
+  }
+
+  // Apply overlap classes to tokens that share the same position
+  for (const positionKey in positionGroups) {
+    const tokensAtPosition = positionGroups[positionKey];
+
+    if (tokensAtPosition.length > 1) {
+      // Sort tokens for consistent positioning
+      // First by player number, then by token key for deterministic results
+      tokensAtPosition.sort((a, b) => {
+        if (a.player !== b.player) {
+          return a.player - b.player;
+        }
+        return a.tokenKey.localeCompare(b.tokenKey);
+      });
+
+      // Apply positioning classes - alternating left and right for more tokens
+      for (let i = 0; i < tokensAtPosition.length; i++) {
+        const token = tokensAtPosition[i];
+
+        if (i % 2 === 0) {
+          token.element.classList.add("left-medium");
+        } else {
+          token.element.classList.add("right-medium");
+        }
+      }
+    }
+  }
+}
+
+function clearAllOverlapClasses() {
+  // Remove overlap classes from all tokens
+  for (let p = 1; p <= 4; p++) {
+    const playerTokens = tokens[`player${p}`];
+    for (const tokenKey in playerTokens) {
+      const token = playerTokens[tokenKey];
+      if (token.element) {
+        token.element.classList.remove("left-medium", "right-medium");
+      }
+    }
+  }
+}
+
 function showMessage(text, type = "info") {
   // Create message element if it doesn't exist
   let messageEl = document.querySelector(".game-message");
@@ -526,6 +610,9 @@ async function slideTokenBackToHome(capturedTokenInfo) {
   // Remove visual effects
   capturedToken.element.classList.remove("safe", "moveable", "sliding-back");
 
+  // Update token overlaps after capture
+  updateTokenOverlaps();
+
   // Removed capture message for immediate gameplay
 }
 
@@ -551,6 +638,9 @@ async function moveTokenFromHome(player, token, playerNumber) {
 
   // Update z-index for newly active token
   updateTokenZIndex(token, 0);
+
+  // Update token overlaps after movement
+  updateTokenOverlaps();
 
   // Removed success message for immediate gameplay
 }
@@ -617,6 +707,9 @@ async function moveToken(
       hasRolledSix = true; // Extra turn for capture
     }
   }
+
+  // Update token overlaps after movement
+  updateTokenOverlaps();
 }
 
 function checkWinCondition(playerNumber) {
@@ -816,6 +909,8 @@ function clearTokenHighlights() {
   });
   // Update z-indices after removing moveable class
   updateAllTokenZIndices();
+  // Update token overlaps after clearing highlights
+  updateTokenOverlaps();
 }
 
 function highlightMoveableTokens(moveableTokens) {
@@ -825,6 +920,8 @@ function highlightMoveableTokens(moveableTokens) {
   });
   // Update z-indices after highlighting to ensure proper layering
   updateAllTokenZIndices();
+  // Update token overlaps after highlighting
+  updateTokenOverlaps();
 }
 
 // =============================================================================
@@ -937,6 +1034,9 @@ function processDiceResult() {
 
 function handleTokenClick(event) {
   if (gameState !== "moving") return;
+  // Immediately update token overlaps when a moveable token is clicked
+  // This provides instant visual feedback by removing overlap classes
+  updateTokenOverlaps();
 
   const tokenElement = event.currentTarget;
   const playerNumber = parseInt(tokenElement.dataset.player);
@@ -976,37 +1076,6 @@ async function executeMoveToken(
 
   if (moveableToken.reason === "exit_home") {
     await moveTokenFromHome(playerData, tokenElement, playerNumber);
-  } else if (moveableToken.reason === "finish") {
-    // Move to center (finish position)
-    tokenData.finished = true;
-    tokenElement.classList.add("finished");
-
-    // Give extra turn for finishing a token
-    hasRolledSix = true;
-
-    // Move to center triangle
-    const centerTriangle = document.querySelector(
-      `.center-triangle.player-${playerNumber}`
-    );
-    if (centerTriangle) {
-      const rect = centerTriangle.getBoundingClientRect();
-      const boardRect = document
-        .querySelector(".board")
-        .getBoundingClientRect();
-      const x =
-        (rect.left + rect.width / 2 - boardRect.left) / (boardRect.width / 15);
-      const y =
-        (rect.top + rect.height / 2 - boardRect.top) / (boardRect.height / 15);
-
-      tokenElement.style.setProperty("--data-x", x);
-      tokenElement.style.setProperty("--data-y", y);
-
-      // Update z-index based on new --data-x value
-      updateTokenZIndex(tokenElement, tokenData.position);
-    }
-
-    // Removed finish message for immediate gameplay
-    checkWinCondition(playerNumber);
   } else {
     await moveToken(
       playerData.positions,
@@ -1059,6 +1128,10 @@ document.addEventListener("click", (e) => {
 
 // Initialize game
 updateCurrentPlayerDisplay();
+
+// Initialize token overlaps
+updateTokenOverlaps();
+
 showMessage(
   `Game started! Player ${currentPlayer}'s turn. Click the dice to roll.`,
   "info"

@@ -12,10 +12,10 @@
   color: #00bfff;
 }
 .player-3 {
-  color: #90ee90;
+  color: #6fd66b;
 }
 .player-4 {
-  color: #ffd700;
+  color: #ffc800;
 }
 
 main {
@@ -27,8 +27,58 @@ main {
   background-color: midnightblue;
 }
 
+.main-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "player4 . player1"
+    "board board board"
+    "player3 . player2";
+  align-items: center;
+  gap: 32px;
+
+  & .player-control {
+    &.player-1 {
+      grid-area: player1;
+    }
+    &.player-2 {
+      grid-area: player2;
+    }
+    &.player-3 {
+      grid-area: player3;
+    }
+    &.player-4 {
+      grid-area: player4;
+    }
+
+    position: relative;
+    width: 50%;
+    aspect-ratio: 1 / 1;
+    background-color: currentColor;
+    margin: 0 auto;
+    border-radius: 10%;
+    outline: 5px solid whitesmoke;
+    box-shadow: inset 0 0 30px 10px rgba(0, 0, 0, 0.3);
+
+    & .dice-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      aspect-ratio: 1 / 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
 .board {
-  height: var(--board-size, 1350px);
+  grid-area: board;
+  /* opacity: 0; */
+  height: var(--board-size, 100%);
   aspect-ratio: 1 / 1;
   outline: 1px solid midnightblue;
 
@@ -36,6 +86,10 @@ main {
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
   position: relative;
+
+  /* Board rotation support */
+  transform-origin: center center;
+  transition: transform 0.5s ease-in-out;
 }
 
 .home {
@@ -175,19 +229,6 @@ main {
       clip-path: polygon(0 0, 100% 50%, 0 100%);
     }
   }
-
-  & .dice-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    aspect-ratio: 1 / 1;
-    padding: 1.5em;
-    background-color: midnightblue;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 }
 
 /* Token styles */
@@ -206,15 +247,15 @@ main {
 
   & .token-inner {
     position: relative;
-    min-width: 70%;
+    width: 65%;
     aspect-ratio: 1 / 1;
-    min-height: 70%;
     border-radius: 50%;
     background-color: currentColor;
-    border: 0.2em solid whitesmoke;
+    border: 0.1em solid whitesmoke;
     transition: all 0.3s ease;
 
     & img {
+      filter: drop-shadow(0px 12px 6px rgba(0, 0, 0, 0.2));
       height: 0;
       position: absolute;
       bottom: 50%;
@@ -225,8 +266,8 @@ main {
   }
 
   &.safe .token-inner {
-    border-color: gold;
-    box-shadow: 0 0 10px gold;
+    border-color: midnightblue;
+    /* box-shadow: 0 0 10px gold; */
   }
 
   /* Moveable token popup effect */
@@ -242,28 +283,22 @@ main {
       width: max(44px, calc(100% + 15px));
       height: max(44px, calc(100% + 15px));
       background: rgba(255, 255, 255, 0.9);
-      border: 3px solid midnightblue;
+      border: 3px solid currentColor;
       border-radius: 50%;
-      animation: popupPulse 1.5s ease-in-out infinite;
+      animation: rippleEffect 1s ease-out infinite;
       z-index: -1;
     }
 
     & .token-inner {
-      border: 3px solid midnightblue;
-      box-shadow: 0 0 20px midnightblue;
+      /* border: 3px solid midnightblue; */
+      /* box-shadow: 0 0 20px currentColor; */
       transform: scale(1.15) translateZ(10px);
       position: relative;
       z-index: 2;
       & img {
-        height: 96px;
+        height: 72px;
       }
     }
-  }
-
-  &.finished .token-inner {
-    border-color: #4ade80;
-    box-shadow: 0 0 20px #4ade80;
-    background-color: #86efac !important;
   }
 }
 
@@ -358,6 +393,19 @@ main {
   100% {
     transform: translate(-50%, -50%) scale(1.2);
     opacity: 0;
+  }
+}
+
+@keyframes bounce-up {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 

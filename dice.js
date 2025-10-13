@@ -81,13 +81,10 @@ window.shuffleCube = shuffleCube;
 function shuffleCube() {
   const outerCube = document.querySelector(".outer-cube");
   const cubeContainer = document.querySelector(".cube-container");
-
-  console.log("🎲 Starting cube shuffle...");
+  const diceContainer = document.querySelector(".dice-container");
 
   // Generate the final dice number that will be used for the game
   const finalDiceValue = generateVeryRandomDiceNumber();
-  console.log(`🎯 Final dice value for game: ${finalDiceValue}`);
-
   // Generate first random face for shuffle animation (different from final)
   let firstRandomFace = generateVeryRandomDiceNumber();
   // Ensure first face is different from final for better visual effect
@@ -111,6 +108,12 @@ function shuffleCube() {
     : "rotateY(360deg)";
 
   // Execute rotations
+  diceContainer.style.animation = "bounce-up 0.5s";
+
+  // Remove animation after it completes to reset for next time
+  setTimeout(() => {
+    diceContainer.style.animation = "";
+  }, 500); // Match the animation duration
   outerCube.style.transform = newOuterRotation;
   cubeContainer.style.transform = newContainerRotation;
 

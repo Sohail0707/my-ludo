@@ -47,7 +47,7 @@ function setResponsiveDiceSize(boardSize) {
   // Dice should be proportional to board size
   // The dice container is 60% of center area, and center is 3/15 of board
   // So dice area = board * (3/15) * 0.6 = board * 0.12
-  const diceSize = Math.floor(boardSize * 0.08); // 8% of board size
+  const diceSize = Math.floor(boardSize * 0.12); // Increased from 0.08 to 0.12 (12% of board size)
   const diceHalf = Math.floor(diceSize / 2);
   const dicePadding = Math.floor(diceSize * 0.15); // 15% of dice size
   const dotSize = Math.floor(diceSize * 0.16); // 16% of dice size
@@ -306,6 +306,37 @@ function getPlayerData(playerNumber) {
   return eval(`player${playerNumber}`);
 }
 
+function updateTokenZIndex(tokenElement, position) {
+  // Base z-index for tokens is 10
+  // Add position value to make tokens further along the path appear on top
+  // Add extra boost for moveable tokens
+  const baseZIndex = 10;
+  const positionBonus = Math.max(0, position); // Ensure non-negative
+  const moveableBonus = tokenElement.classList.contains("moveable") ? 1000 : 0;
+
+  const finalZIndex = baseZIndex + positionBonus + moveableBonus;
+  tokenElement.style.zIndex = finalZIndex;
+
+  console.log(
+    `🔧 Token z-index updated: position=${position}, final z-index=${finalZIndex}, moveable=${tokenElement.classList.contains(
+      "moveable"
+    )}`
+  );
+}
+
+function updateAllTokenZIndices() {
+  // Update z-index for all active tokens based on their current positions
+  for (let p = 1; p <= 4; p++) {
+    const playerTokens = tokens[`player${p}`];
+    for (const tokenKey in playerTokens) {
+      const token = playerTokens[tokenKey];
+      if (token.element && token.active && !token.finished) {
+        updateTokenZIndex(token.element, token.position);
+      }
+    }
+  }
+}
+
 function showMessage(text, type = "info") {
   // Create message element if it doesn't exist
   let messageEl = document.querySelector(".game-message");
@@ -350,7 +381,7 @@ function initializePlayerTokens(player, playerNumber) {
 
     const tokenInnerElement = document.createElement("div");
     tokenInnerElement.classList.add("token-inner");
-    tokenInnerElement.innerHTML = `<img src="assets/token${playerNumber}.png" alt="P${playerNumber} Token ${
+    tokenInnerElement.innerHTML = `<img src="assets/token${playerNumber}.svg" alt="P${playerNumber} Token ${
       index + 1
     }">`;
 
@@ -390,15 +421,16 @@ function findMoveableTokens(playerNumber) {
       const playerData = getPlayerData(playerNumber);
       const newPosition = token.position + diceValue;
       const pathLength = playerData.positions.length;
+      const finishPosition = pathLength - 1; // Last index in positions array is the finish
 
       console.log(
-        `🔍 ${tokenKey}: position=${token.position}, dice=${diceValue}, newPosition=${newPosition}, pathLength=${pathLength}`
+        `🔍 ${tokenKey}: position=${token.position}, dice=${diceValue}, newPosition=${newPosition}, pathLength=${pathLength}, finishPosition=${finishPosition}`
       );
 
       // Token can only move if:
       // 1. It stays within the path (normal move)
-      // 2. OR it lands exactly on the finish position (one step after last path position)
-      if (newPosition < pathLength) {
+      // 2. OR it lands exactly on the finish position (last index in positions array)
+      if (newPosition < finishPosition) {
         moveableTokens.push({
           token,
           tokenKey,
@@ -406,7 +438,7 @@ function findMoveableTokens(playerNumber) {
           reason: "normal_move",
         });
         console.log(`✅ ${tokenKey}: Can make normal move`);
-      } else if (newPosition === pathLength) {
+      } else if (newPosition === finishPosition) {
         // Token can finish only if it lands EXACTLY on the finish position
         moveableTokens.push({
           token,
@@ -416,12 +448,11 @@ function findMoveableTokens(playerNumber) {
         });
         console.log(`✅ ${tokenKey}: Can finish (exact position)`);
       } else {
-        // If newPosition > pathLength, token cannot move
+        // If newPosition > finishPosition, token cannot move
         console.log(
-          `❌ ${tokenKey}: Cannot move - would overshoot (${newPosition} > ${pathLength})`
+          `❌ ${tokenKey}: Cannot move - would overshoot (${newPosition} > ${finishPosition})`
         );
       }
-      // If newPosition > playerData.positions.length, token cannot move
       // This prevents overshooting the finish line
     } else {
       console.log(
@@ -537,6 +568,9 @@ async function moveTokenFromHome(player, token, playerNumber) {
   tokens[`player${playerNumber}`][tokenKey].active = true;
   tokens[`player${playerNumber}`][tokenKey].safe = true; // Starting position is safe
 
+  // Update z-index for newly active token
+  updateTokenZIndex(token, 0);
+
   // Removed success message for immediate gameplay
 }
 
@@ -549,7 +583,8 @@ async function moveToken(
 ) {
   const currentIndex = tokenData.position;
   const startIndex = currentIndex + 1;
-  const endIndex = Math.min(startIndex + diceRoll - 1, path.length - 1);
+  const finishPosition = path.length - 1; // Last index is the finish position
+  const endIndex = Math.min(startIndex + diceRoll - 1, finishPosition);
 
   for (let i = startIndex; i <= endIndex; i++) {
     const coords = path[i];
@@ -570,16 +605,24 @@ async function moveToken(
       tokenData.safe = false;
     }
 
+    // Update z-index based on new position
+    updateTokenZIndex(tokenElement, i);
+
     await sleep(300);
   }
 
   // Update final position
   tokenData.position = endIndex;
 
+  // Final z-index update
+  updateTokenZIndex(tokenElement, endIndex);
+
   // Check if token finished
   if (endIndex === path.length - 1) {
     tokenData.finished = true;
     tokenElement.classList.add("finished");
+    // Give extra turn for finishing a token
+    hasRolledSix = true;
     // Removed finish message for immediate gameplay
     checkWinCondition(playerNumber);
   } else {
@@ -644,12 +687,46 @@ function updateCurrentPlayerDisplay() {
   if (currentHome) {
     currentHome.classList.add("current-player");
   }
+
+  // Move dice to current player's control box
+  moveDiceToCurrentPlayer();
+}
+
+function moveDiceToCurrentPlayer() {
+  // Find the dice container
+  const diceContainer = document.querySelector(".dice-container");
+  if (!diceContainer) {
+    console.warn("Dice container not found");
+    return;
+  }
+
+  // Find the current player's control box
+  const currentPlayerControl = document.querySelector(
+    `.player-control.player-${currentPlayer}`
+  );
+  if (!currentPlayerControl) {
+    console.warn(`Player control box for player ${currentPlayer} not found`);
+    return;
+  }
+
+  // Check if dice is already in the correct location
+  if (currentPlayerControl.contains(diceContainer)) {
+    return; // Already in the right place
+  }
+
+  // Remove dice from current location and add to current player's control
+  diceContainer.remove();
+  currentPlayerControl.appendChild(diceContainer);
+
+  console.log(`🎲 Dice moved to Player ${currentPlayer}'s control box`);
 }
 
 function clearTokenHighlights() {
   document.querySelectorAll(".token").forEach((token) => {
     token.classList.remove("moveable");
   });
+  // Update z-indices after removing moveable class
+  updateAllTokenZIndices();
 }
 
 function highlightMoveableTokens(moveableTokens) {
@@ -657,6 +734,8 @@ function highlightMoveableTokens(moveableTokens) {
   moveableTokens.forEach(({ token }) => {
     token.element.classList.add("moveable");
   });
+  // Update z-indices after highlighting to ensure proper layering
+  updateAllTokenZIndices();
 }
 
 // =============================================================================
@@ -761,6 +840,9 @@ async function executeMoveToken(
     // Move to center (finish position)
     tokenData.finished = true;
     tokenElement.classList.add("finished");
+
+    // Give extra turn for finishing a token
+    hasRolledSix = true;
 
     // Move to center triangle
     const centerTriangle = document.querySelector(
@@ -1023,28 +1105,29 @@ const debugFunctions = {
 
     // Position tokens near the finish line
     const playerData = getPlayerData(1);
-    const pathLength = playerData.positions.length; // Total path length (56 positions)
+    const pathLength = playerData.positions.length; // Total path positions
+    const finishPosition = pathLength - 1; // Last index is the actual finish position
 
     // Position tokens at different distances from finish
     const token1 = tokens.player1.token1;
     const token2 = tokens.player1.token2;
 
-    // Token 1: Exactly at position that needs 1 to finish (can win with dice = 1)
-    const exactFinishPosition = pathLength - 1; // Position 55, needs 1 to reach position 56 (finish)
+    // Token 1: Exactly 1 step before finish (can win with dice = 1)
+    const oneStepBeforeFinish = finishPosition - 1;
     this.moveTokenToPosition(
       token1,
       1,
-      exactFinishPosition,
-      playerData.positions[exactFinishPosition]
+      oneStepBeforeFinish,
+      playerData.positions[oneStepBeforeFinish]
     );
 
-    // Token 2: At position that needs 3 to finish (can only win with dice = 3, not 4, 5, or 6)
-    const almostFinishPosition = pathLength - 3; // Position 53, needs 3 to reach position 56 (finish)
+    // Token 2: Exactly 3 steps before finish (can only win with dice = 3)
+    const threeStepsBeforeFinish = finishPosition - 3;
     this.moveTokenToPosition(
       token2,
       1,
-      almostFinishPosition,
-      playerData.positions[almostFinishPosition]
+      threeStepsBeforeFinish,
+      playerData.positions[threeStepsBeforeFinish]
     );
 
     // Highlight both tokens
@@ -1062,18 +1145,18 @@ const debugFunctions = {
 
     this.logDebugScenario("Finish Line Scenario", {
       token1: {
-        position: exactFinishPosition,
+        position: oneStepBeforeFinish,
         needsToFinish: 1,
         canWinWith: [1],
       },
       token2: {
-        position: almostFinishPosition,
+        position: threeStepsBeforeFinish,
         needsToFinish: 3,
         canWinWith: [3],
         cannotWinWith: [4, 5, 6],
       },
       pathLength: pathLength,
-      finishPosition: pathLength,
+      finishPosition: finishPosition,
     });
   },
 
@@ -1086,13 +1169,13 @@ const debugFunctions = {
     // Position Player 2 token exactly like in the screenshot
     const playerData = getPlayerData(2);
     const pathLength = playerData.positions.length; // Should be 57 positions (0-56)
+    const finishPosition = pathLength - 1; // Last index is the actual finish position
 
     console.log(`Player 2 path length: ${pathLength}`);
-    console.log(`Player 2 positions array:`, playerData.positions);
+    console.log(`Player 2 finish position: ${finishPosition}`);
 
-    // If token needs exactly 1 to finish, it should be at position (pathLength - 1)
-    // So that newPosition = currentPosition + 1 = pathLength (which is the finish)
-    const needsOneToFinish = pathLength - 1; // This should be position 56 if pathLength is 57
+    // If token needs exactly 1 to finish, it should be 1 step before the finish position
+    const needsOneToFinish = finishPosition - 1; // One step before finish position
     const token = tokens.player2.token1;
 
     this.moveTokenToPosition(
@@ -1121,10 +1204,10 @@ const debugFunctions = {
       needsToFinish: 1, // needs exactly 1 to finish
       canWinWith: [1],
       cannotWinWith: [2, 3, 4, 5, 6],
-      finishPosition: pathLength,
+      finishPosition: finishPosition,
       calculation: `position ${needsOneToFinish} + dice 1 = ${
         needsOneToFinish + 1
-      } (finish at ${pathLength})`,
+      } (finish at ${finishPosition})`,
     });
   },
 
@@ -1263,6 +1346,9 @@ const debugFunctions = {
       tokenData.element.classList.remove("safe");
     }
 
+    // Update z-index based on position
+    updateTokenZIndex(tokenData.element, position);
+
     console.log(
       `🛠️ Debug: Moved Player ${playerNum} token to position ${position} at coordinates [${x}, ${y}]`
     );
@@ -1355,10 +1441,55 @@ const debugFunctions = {
       }
     }, 10000);
   },
+
+  // Test board rotation for different players
+  testBoardRotation() {
+    console.log("🔄 Debug: Testing board rotation system");
+
+    let currentRotation = 1;
+    const rotationInterval = setInterval(() => {
+      // Update the global variable
+      window.BOTTOM_LEFT_PLAYER = currentRotation;
+
+      // Apply the rotation
+      setBoardRotation();
+
+      console.log(`🔄 Rotation test: Player ${currentRotation} at bottom-left`);
+
+      currentRotation++;
+      if (currentRotation > 4) {
+        currentRotation = 1;
+        clearInterval(rotationInterval);
+        console.log("🔄 Board rotation test completed - reset to Player 1");
+      }
+    }, 2000); // Change every 2 seconds
+  },
+
+  // Test dice movement between players
+  testDiceMovement() {
+    console.log("🎲 Debug: Testing dice movement between players");
+
+    let testPlayer = 1;
+    const moveInterval = setInterval(() => {
+      // Switch to the test player
+      currentPlayer = testPlayer;
+      updateCurrentPlayerDisplay();
+
+      console.log(`🎲 Dice moved to Player ${testPlayer}`);
+
+      testPlayer++;
+      if (testPlayer > 4) {
+        testPlayer = 1;
+        clearInterval(moveInterval);
+        console.log("🎲 Dice movement test completed - reset to Player 1");
+      }
+    }, 1500); // Change every 1.5 seconds
+  },
 };
 
 // Make debug functions globally available
 window.debugFunctions = debugFunctions;
+window.setBoardRotation = setBoardRotation;
 
 // Add keyboard shortcuts for debug functions
 document.addEventListener("keydown", (e) => {

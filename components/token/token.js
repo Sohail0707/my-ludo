@@ -1,7 +1,6 @@
-// ==========================================================
-// =================IMPORTS AND DEPENDENCIES=================
+// IMPORTS
 import { board } from "../../layout/board.js";
-import { unfreezeDice } from "../dice/dice.js";
+import { unfreezeDice, freezeDice } from "../dice/dice.js";
 import {
   player1,
   player2,
@@ -16,9 +15,8 @@ import {
   switchToNextPlayer,
   checkWinCondition,
 } from "../../utils/game-logic.js";
-import { freezeDice } from "../dice/dice.js";
 
-// Token State and Positions
+// TOKEN STATE
 export const tokens = [];
 
 export function initializeTokens() {
@@ -71,18 +69,12 @@ export function initializeTokens() {
 
       tokenElement.appendChild(tokenInnerElement);
       tokens.push(tokenElement);
-      addTokenEventListeners(tokenElement);
       board.appendChild(tokenElement);
     });
   }
 
   // Initialize token click handling after all tokens are created
   initializeTokenClickHandler();
-}
-
-function addTokenEventListeners(token) {
-  // Token click handling is managed by initializeTokenClickHandler()
-  // This function is kept for future individual token event listener needs
 }
 
 export function activateToken(token) {
@@ -124,7 +116,7 @@ export function checkTokenSafty() {
   });
 }
 
-// Function to move token by specified steps with animation
+// TOKEN MOVEMENT
 export async function moveToken(token, steps) {
   const playerNumber = parseInt(token.dataset.player);
   const player = getPlayerData(playerNumber);
@@ -148,11 +140,8 @@ export async function moveToken(token, steps) {
   analyzeAndArrangeAllTokens();
 }
 
-// ============================================================
-// ==========TOKEN POSITIONING AND OVERLAP MANAGEMENT==========
+// TOKEN POSITIONING
 export function analyzeAndArrangeAllTokens() {
-  console.log("called analyse token");
-
   if (!tokens) return;
 
   // Add small delay to ensure DOM updates are complete
@@ -160,11 +149,7 @@ export function analyzeAndArrangeAllTokens() {
     arrangeTokensNow();
   }, 50);
 }
-
-// Alternative synchronous version with forced style recalculation
 export function analyzeAndArrangeAllTokensSync() {
-  console.log("called analyse token (sync)");
-
   if (!tokens) return;
 
   // Force browser to recalculate styles by accessing offsetHeight
@@ -246,8 +231,7 @@ function arrangeTokensNow() {
   });
 }
 
-// =============================================================
-// ===================TOKEN MOVEMENT ANALYSIS===================
+// MOVEMENT ANALYSIS
 export function findMoveableTokens(playerNumber, diceValue) {
   const moveableTokens = [];
 
@@ -329,18 +313,7 @@ export function handleMultipleMoveableTokens(moveableTokens, diceValue) {
   gameState.activeTokens = moveableTokens;
 }
 
-// ============================================================================
-// TOKEN MOVEMENT EXECUTION
-// High-level token movement with integrated post-movement logic
-// ============================================================================
-
-/**
- * Execute token movement with comprehensive post-movement handling
- * Integrates with existing moveToken() function and handles game logic
- *
- * @param {HTMLElement} token - The token DOM element to move
- * @param {number} steps - Number of steps to move
- */
+// MOVEMENT EXECUTION
 export async function handleTokenMovement(token, steps) {
   const playerNumber = parseInt(token.dataset.player);
   const currentPosition = parseInt(token.dataset.position);
@@ -365,19 +338,7 @@ export async function handleTokenMovement(token, steps) {
   await handlePostMovementLogic(token, playerNumber, moveType);
 }
 
-// ============================================================================
-// POST-MOVEMENT GAME LOGIC
-// Handles captures, win conditions, and turn management after token movement
-// ============================================================================
-
-/**
- * Handle all game logic that occurs after a token movement
- * Checks for captures, win conditions, and manages turn switching
- *
- * @param {HTMLElement} token - The token that was moved
- * @param {number} playerNumber - Player who moved the token
- * @param {string} moveType - Type of move: "exit_home", "normal_move", "finish"
- */
+// POST-MOVEMENT LOGIC
 export async function handlePostMovementLogic(token, playerNumber, moveType) {
   let shouldGetExtraTurn = false;
 
@@ -406,19 +367,7 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
   }
 }
 
-// ============================================================================
 // CAPTURE MECHANICS
-// Functions to detect and handle token captures between players
-// ============================================================================
-
-/**
- * Check if the moving token captured any opponent tokens
- * Compares token positions to detect collisions with opponent pieces
- *
- * @param {HTMLElement} movingToken - The token that just moved
- * @param {number} playerNumber - Player number who owns the moving token
- * @returns {Object|null} Capture result object or null if no capture
- */
 export function checkForCapture(movingToken, playerNumber) {
   const tokenX = parseInt(movingToken.style.getPropertyValue("--data-x"));
   const tokenY = parseInt(movingToken.style.getPropertyValue("--data-y"));
@@ -470,15 +419,7 @@ export async function handleCapture(captureResult) {
   capturedToken.classList.remove("active", "finished");
 }
 
-// ============================================================================
 // TOKEN CLICK HANDLING
-// Functions to handle token click events and user interactions
-// ============================================================================
-
-/**
- * Initialize token click event listener
- * This should be called after tokens are created
- */
 export function initializeTokenClickHandler() {
   // Add token click handling
   document.addEventListener("click", handleTokenClickEvent);

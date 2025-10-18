@@ -1,7 +1,5 @@
-// ==========================================================
-// =================IMPORTS AND DEPENDENCIES=================
+// IMPORTS
 import {
-  moveToken,
   tokens,
   findMoveableTokens,
   handleNoMoveableTokens,
@@ -19,16 +17,9 @@ import {
   removeBoardCurrentPlayer,
   makePlayerWin,
 } from "../layout/board.js";
-import {
-  player1,
-  player2,
-  player3,
-  player4,
-  getPlayerData,
-} from "./player-data.js";
+import { getPlayerData } from "./player-data.js";
 
-// ==========================================================
-// ==================GAME STATE MANAGEMENT==================
+// GAME STATE
 export const gameState = {
   playerCount: 4,
   currentPlayer: 1,
@@ -44,8 +35,7 @@ export const getCurrentPlayer = () => gameState.currentPlayer;
 export let finishedPlayers = new Set(); // Set to track which players have finished
 export let playerRankings = []; // Array to store players in finishing order [1st, 2nd, 3rd]
 
-// ==========================================================
-// =================SWITCH TO NEXT PLAYER=================
+// PLAYER SWITCHING
 export function switchToNextPlayer() {
   let nextPlayer = gameState.currentPlayer;
   let attempts = 0;
@@ -76,10 +66,7 @@ export function switchToNextPlayer() {
   console.log(`🔄 Switched to Player ${gameState.currentPlayer}`);
 }
 
-// ============================================================================
-// MAIN GAME BRAIN - CENTRAL CONTROLLER
-// The core game logic that orchestrates all game mechanics after dice roll
-// ============================================================================
+// GAME LOGIC
 export function gameBrain(diceValue) {
   console.log(
     `🎮 Game Brain: Player ${gameState.currentPlayer} rolled ${diceValue}`
@@ -103,10 +90,7 @@ export function gameBrain(diceValue) {
   // Note: Special dice rules (consecutive sixes) are now handled before gameBrain() is called
 }
 
-// ============================================================================
-// WIN CONDITION MANAGEMENT
-// Functions to check for game completion and handle end-game scenarios
-// ============================================================================
+// WIN CONDITIONS
 
 /**
  * Check if a player has won the game
@@ -244,31 +228,7 @@ function handleGameEnd() {
   // Example: Show final results modal, save scores, etc.
 }
 
-// ============================================================================
-// LEGACY COMPATIBILITY FUNCTIONS
-// Maintained for backward compatibility with existing code
-// ============================================================================
-
-/**
- * Legacy game update function
- * @deprecated Use gameBrain() directly instead
- */
-export function updateGame() {
-  console.log("⚠️  updateGame() is deprecated. Use gameBrain() instead.");
-  if (gameState.diceValue > 0) {
-    gameBrain(gameState.diceValue);
-  }
-}
-
-// ============================================================================
 // GAME INITIALIZATION
-// Functions to set up and reset the game to initial state
-// ============================================================================
-
-/**
- * Initialize or reset the game to starting conditions
- * Sets up initial game state, clears tracking variables, and prepares for play
- */
 export function initializeGame() {
   console.log("🎮 Initializing Ludo Game...");
 
@@ -290,10 +250,3 @@ export function initializeGame() {
 
   console.log(`🎯 Game ready! Player ${gameState.currentPlayer} starts.`);
 }
-
-// ============================================================================
-// UTILITY AND HELPER FUNCTIONS
-// Small utility functions used throughout the game logic
-// ============================================================================
-
-// getPlayerData is now imported from player-data.js

@@ -1,8 +1,7 @@
-// ==========================================================
-// =================IMPORTS AND DEPENDENCIES=================
+// IMPORTS
 import { board } from "../../layout/board.js";
 
-// Generate Boxes Grid
+// STEP BOXES GENERATION
 export function generateStepBoxes() {
   for (let i = 0; i < 72; i++) {
     const stepBox = document.createElement("div");

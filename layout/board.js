@@ -13,5 +13,3 @@ export function makePlayerWin(playerNumber, winnerPosition) {
   board.setAttribute("winner-player", `${playerNumber}`);
   board.setAttribute("winner-position", `${winnerPosition}`);
 }
-
-// makePlayerWin(3, 3);

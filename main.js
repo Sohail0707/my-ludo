@@ -1,7 +1,7 @@
 import { diceContainer } from "./components/dice/dice.js";
 import { generateStepBoxes } from "./components/step-boxes/step-boxes.js";
 import { initializeTokens } from "./components/token/token.js";
-import { gameState, initializeGame } from "./utils/game-logic.js";
+import { initializeGame } from "./utils/game-logic.js";
 
 // Initialize game components
 generateStepBoxes();

@@ -1,5 +1,4 @@
-// ==========================================================
-// =================IMPORTS AND DEPENDENCIES=================
+// IMPORTS
 import {
   gameState,
   gameBrain,
@@ -7,7 +6,7 @@ import {
 } from "../../utils/game-logic.js";
 import { removeBoardCurrentPlayer } from "../../layout/board.js";
 
-// Create Dice
+// DICE ELEMENTS
 export const dice = document.createElement("div");
 dice.className = "dice";
 
@@ -132,11 +131,7 @@ export function unfreezeDice() {
   diceContainer.style.pointerEvents = "auto";
 }
 
-// ============================================================================
-// DICE RULES AND SPECIAL CONDITIONS
-// Handles special dice rules like consecutive sixes and forfeit conditions
-// ============================================================================
-// Track consecutive sixes for each player (3 in a row = forfeit turn)
+// DICE RULES
 export let consecutiveSixes = {
   player1: 0,
   player2: 0,

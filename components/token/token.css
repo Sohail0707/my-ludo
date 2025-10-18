@@ -37,6 +37,11 @@
     }
   }
 
+  &.being-captured .token-inner {
+    background-color: crimson;
+    transition: all 0.1s;
+  }
+
   &.safe .token-inner {
     border-color: midnightblue;
     box-shadow: 0 0 10px gold;
@@ -72,7 +77,4 @@
       }
     }
   }
-
-  /* Special Token states */
-  /* ================================================= */
 }

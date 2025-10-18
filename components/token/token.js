@@ -97,6 +97,13 @@ export function deactivateAllTokens() {
 export function checkTokenSafty() {
   tokens.forEach((token) => {
     const currentPosition = parseInt(token.dataset.position);
+    const isBeingCaptured = token.classList.contains("being-captured");
+
+    // Tokens being captured are never safe during their journey back
+    if (isBeingCaptured) {
+      token.classList.remove("safe");
+      return;
+    }
 
     // Tokens are safe in these conditions:
     // 1. At home (position -1)
@@ -123,7 +130,7 @@ export async function moveToken(token, steps) {
 
   let currentPosition = parseInt(token.dataset.position);
   for (let step = 1; step <= steps; step++) {
-    if (step === 1) analyzeAndArrangeAllTokens();
+    analyzeAndArrangeAllTokens();
     currentPosition++;
     const [x, y] = player.positions[currentPosition];
     token.style.setProperty("--data-x", x);
@@ -137,7 +144,7 @@ export async function moveToken(token, steps) {
   }
   token.dataset.steps = 0;
   unfreezeDice(); // Unfreeze dice after token movement
-  analyzeAndArrangeAllTokens();
+  // analyzeAndArrangeAllTokens();
 }
 
 // TOKEN POSITIONING
@@ -368,6 +375,75 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
 }
 
 // CAPTURE MECHANICS
+/**
+ * Move captured token back to home following the reverse path with animation
+ * Updates all token properties (position, coordinates, classes) during the journey
+ * @param {HTMLElement} token - The captured token to move back
+ */
+export async function moveCapturedTokenToHome(token) {
+  const playerNumber = parseInt(token.dataset.player);
+  const player = getPlayerData(playerNumber);
+  let currentPosition = parseInt(token.dataset.position);
+
+  console.log(
+    `🏠 Moving Player ${playerNumber}'s token back home from position ${currentPosition}`
+  );
+
+  // Mark token as being captured to prevent interference
+  token.classList.add("being-captured");
+  token.classList.remove("active", "finished", "safe");
+
+  // Increase z-index to show captured token on top during animation
+  token.style.zIndex = 1000;
+
+  // Move backwards step by step from current position to starting position (0)
+  while (currentPosition > 0) {
+    currentPosition--;
+    const [x, y] = player.positions[currentPosition];
+
+    token.style.setProperty("--data-x", x);
+    token.style.setProperty("--data-y", y);
+    token.style.zIndex = x + 2;
+    token.dataset.position = currentPosition;
+
+    // Update token arrangements during movement
+    analyzeAndArrangeAllTokens();
+
+    // Animation delay for smooth movement
+    await new Promise((resolve) => setTimeout(resolve, 90));
+  }
+
+  // If token was captured at starting position, add brief pause there
+  if (parseInt(token.dataset.position) === 0) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  // Final move from starting position (0) to home position (-1)
+  const playerData = getPlayerData(playerNumber);
+  const homePosition =
+    playerData.initialPositions[parseInt(token.dataset.tokenNumber) - 1];
+
+  token.style.setProperty("--data-x", homePosition[0]);
+  token.style.setProperty("--data-y", homePosition[1]);
+  token.dataset.position = "-1";
+  token.dataset.steps = 0;
+
+  // Reset z-index to normal home position value
+  token.style.zIndex = homePosition[0] + 2;
+
+  // Remove capture state and add safe class for home
+  token.classList.remove("being-captured", "active", "finished");
+  token.classList.add("safe");
+
+  console.log(`✅ Player ${playerNumber}'s token safely returned home`);
+
+  // Brief pause to show token at home before continuing
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  // Final arrangement after reaching home
+  analyzeAndArrangeAllTokens();
+}
+
 export function checkForCapture(movingToken, playerNumber) {
   const tokenX = parseInt(movingToken.style.getPropertyValue("--data-x"));
   const tokenY = parseInt(movingToken.style.getPropertyValue("--data-y"));
@@ -406,17 +482,8 @@ export async function handleCapture(captureResult) {
     `💥 Player ${gameState.currentPlayer} captured Player ${capturedPlayer}'s token!`
   );
 
-  // Move captured token back to its home position
-  const playerData = getPlayerData(capturedPlayer);
-  const homePosition =
-    playerData.initialPositions[
-      parseInt(capturedToken.dataset.tokenNumber) - 1
-    ];
-
-  capturedToken.dataset.position = "-1";
-  capturedToken.style.setProperty("--data-x", homePosition[0]);
-  capturedToken.style.setProperty("--data-y", homePosition[1]);
-  capturedToken.classList.remove("active", "finished");
+  // Animate the captured token moving back to home following the path
+  await moveCapturedTokenToHome(capturedToken);
 }
 
 // TOKEN CLICK HANDLING

@@ -5,6 +5,8 @@ import {
   switchToNextPlayer,
 } from "../../utils/game-logic.js";
 import { removeBoardCurrentPlayer } from "../../layout/board.js";
+import { isDebugMode, getDebugDiceValue } from "../../debug/debug.js";
+import { setupDebugUI } from "../../debug/debug-ui.js";
 
 // DICE ELEMENTS
 export const dice = document.createElement("div");
@@ -22,6 +24,11 @@ diceContainer.appendChild(diceSpinner);
 
 diceContainer.addEventListener("click", () => {
   rollDice();
+});
+
+// Inject debug UI on game start
+window.addEventListener("DOMContentLoaded", () => {
+  setupDebugUI();
 });
 
 // Create Dice Faces
@@ -100,23 +107,30 @@ function showDiceFace(faceNumber) {
 
 // Function Roll Dice
 function rollDice() {
-  // Use multiple sources of randomness for extra randomness
-  const time = Date.now();
-  const random1 = Math.random();
-  const random2 = Math.random();
-  const random3 = Math.random();
+  let diceValue;
+  if (isDebugMode() && getDebugDiceValue() !== null) {
+    diceValue = getDebugDiceValue();
+    // Bypass dice animation for debug mode
+    handleDiceValue(diceValue);
+    removeBoardCurrentPlayer();
+    return;
+  } else {
+    // Use multiple sources of randomness for extra randomness
+    const time = Date.now();
+    const random1 = Math.random();
+    const random2 = Math.random();
+    const random3 = Math.random();
 
-  // Combine different random sources
-  const seed = (time * random1 * random2 * random3) % 1;
+    // Combine different random sources
+    const seed = (time * random1 * random2 * random3) % 1;
+    diceValue = Math.floor(seed * 6) + 1;
+  }
   freezeDice(); // Freeze dice during roll
-  // Generate number between 1-6
-  const randomDiceValue = Math.floor(seed * 6) + 1;
-
   diceSpinner.classList.add("spin");
-  showDiceFace(randomDiceValue);
+  showDiceFace(diceValue);
   setTimeout(() => {
     diceSpinner.classList.remove("spin");
-    handleDiceValue(randomDiceValue);
+    handleDiceValue(diceValue);
     removeBoardCurrentPlayer();
   }, 500);
 }

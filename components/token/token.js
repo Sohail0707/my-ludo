@@ -354,7 +354,14 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
     console.log(`🏁 Player ${playerNumber} token reached finish!`);
     token.classList.add("finished");
     shouldGetExtraTurn = true;
-    checkWinCondition(playerNumber);
+    const wasWinner = checkWinCondition(playerNumber);
+    // If player just won, switch to next player immediately
+    if (wasWinner) {
+      setTimeout(() => {
+        switchToNextPlayer();
+      }, 300);
+      return;
+    }
   }
 
   // Check for token captures

@@ -129,7 +129,9 @@ export function checkWinCondition(playerNumber) {
 
     // Check if we should end the game
     checkGameEndCondition();
+    return true;
   }
+  return false;
 }
 
 /**

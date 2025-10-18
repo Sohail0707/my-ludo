@@ -55,11 +55,14 @@ export function initializeTokens() {
       App.board.appendChild(tokenElement);
     });
   }
+
+  // Initialize token click handling after all tokens are created
+  initializeTokenClickHandler();
 }
 
 function addTokenEventListeners(token) {
-  // Token click handling is now managed by main.js
-  // This function is kept for future event listener needs
+  // Token click handling is managed by initializeTokenClickHandler()
+  // This function is kept for future individual token event listener needs
 }
 
 export function activateToken(token) {
@@ -125,9 +128,8 @@ export async function moveToken(token, steps) {
   analyzeAndArrangeAllTokens();
 }
 
-// ============================================================================
-// TOKEN POSITIONING AND OVERLAP MANAGEMENT
-// ============================================================================
+// ============================================================
+// ==========TOKEN POSITIONING AND OVERLAP MANAGEMENT==========
 export function analyzeAndArrangeAllTokens() {
   console.log("called analyse token");
 
@@ -222,4 +224,277 @@ function arrangeTokensNow() {
       console.log(`🔄 Arranged ${tokenCount} overlapping tokens`);
     }
   });
+}
+
+// =============================================================
+// ===================TOKEN MOVEMENT ANALYSIS===================
+export function findMoveableTokens(playerNumber, diceValue) {
+  const moveableTokens = [];
+
+  if (!App.tokens) return moveableTokens;
+
+  App.tokens.forEach((token) => {
+    if (parseInt(token.dataset.player) !== playerNumber) return;
+
+    const currentPosition = parseInt(token.dataset.position);
+    const isAtHome = currentPosition === -1;
+
+    if (isAtHome && diceValue === 6) {
+      // Token at home can only move with a 6
+      moveableTokens.push({
+        token: token,
+        moveType: "exit_home",
+        canMove: true,
+      });
+    } else if (!isAtHome && currentPosition >= 0) {
+      // Token on board - check if it can move without overshooting finish
+      const playerData = App.getPlayerData(playerNumber);
+      const newPosition = currentPosition + diceValue;
+      const maxPosition = playerData.positions.length - 1;
+
+      if (newPosition <= maxPosition) {
+        moveableTokens.push({
+          token: token,
+          moveType: newPosition === maxPosition ? "finish" : "normal_move",
+          canMove: true,
+          newPosition: newPosition,
+        });
+      }
+    }
+  });
+
+  return moveableTokens;
+}
+
+export function handleNoMoveableTokens() {
+  console.log(
+    `🚫 No moveable tokens for Player ${App.gameState.currentPlayer}`
+  );
+
+  App.deactivateAllTokens();
+
+  setTimeout(() => {
+    App.switchToNextPlayer();
+  }, 300);
+}
+
+export function handleSingleMoveableToken(moveableTokenInfo, diceValue) {
+  console.log(
+    `🎯 Auto-moving single token for Player ${App.gameState.currentPlayer}`
+  );
+
+  const { token, moveType } = moveableTokenInfo;
+
+  App.deactivateAllTokens();
+
+  // Calculate steps: tokens exiting home move 1 step, others move dice value
+  const steps = moveType === "exit_home" ? 1 : diceValue;
+
+  handleTokenMovement(token, steps);
+}
+
+export function handleMultipleMoveableTokens(moveableTokens, diceValue) {
+  console.log(
+    `🎲 Player ${App.gameState.currentPlayer} has ${moveableTokens.length} moveable tokens`
+  );
+
+  App.deactivateAllTokens();
+
+  // Activate moveable tokens and set their movement steps
+  moveableTokens.forEach(({ token, moveType }) => {
+    const steps = moveType === "exit_home" ? 1 : diceValue;
+    App.activateToken(token);
+    token.dataset.steps = steps;
+  });
+
+  // Store for reference during user selection
+  App.gameState.activeTokens = moveableTokens;
+}
+
+// ============================================================================
+// TOKEN MOVEMENT EXECUTION
+// High-level token movement with integrated post-movement logic
+// ============================================================================
+
+/**
+ * Execute token movement with comprehensive post-movement handling
+ * Integrates with existing moveToken() function and handles game logic
+ *
+ * @param {HTMLElement} token - The token DOM element to move
+ * @param {number} steps - Number of steps to move
+ */
+export async function handleTokenMovement(token, steps) {
+  const playerNumber = parseInt(token.dataset.player);
+  const currentPosition = parseInt(token.dataset.position);
+
+  // Determine movement type based on current position and destination
+  let moveType = "normal_move";
+  if (currentPosition === -1) {
+    moveType = "exit_home";
+  } else {
+    const playerData = App.getPlayerData(playerNumber);
+    const newPosition = currentPosition + steps;
+    const maxPosition = playerData.positions.length - 1;
+    if (newPosition === maxPosition) {
+      moveType = "finish";
+    }
+  }
+
+  // Execute movement using existing token function
+  await moveToken(token, steps);
+
+  // Handle all post-movement game logic
+  await App.handlePostMovementLogic(token, playerNumber, moveType);
+}
+
+// ============================================================================
+// POST-MOVEMENT GAME LOGIC
+// Handles captures, win conditions, and turn management after token movement
+// ============================================================================
+
+/**
+ * Handle all game logic that occurs after a token movement
+ * Checks for captures, win conditions, and manages turn switching
+ *
+ * @param {HTMLElement} token - The token that was moved
+ * @param {number} playerNumber - Player who moved the token
+ * @param {string} moveType - Type of move: "exit_home", "normal_move", "finish"
+ */
+export async function handlePostMovementLogic(token, playerNumber, moveType) {
+  let shouldGetExtraTurn = false;
+
+  // Handle finishing a token
+  if (moveType === "finish") {
+    console.log(`🏁 Player ${playerNumber} token reached finish!`);
+    token.classList.add("finished");
+    shouldGetExtraTurn = true;
+    App.checkWinCondition(playerNumber);
+  }
+
+  // Check for token captures
+  const captureResult = checkForCapture(token, playerNumber);
+  if (captureResult) {
+    await handleCapture(captureResult);
+    shouldGetExtraTurn = true;
+  }
+
+  // Determine next turn based on extra turn conditions and dice value
+  if (!shouldGetExtraTurn && App.gameState.diceValue !== 6) {
+    setTimeout(() => {
+      App.switchToNextPlayer();
+    }, 300);
+  } else {
+    console.log(`🎲 Player ${playerNumber} gets another turn!`);
+  }
+}
+
+// ============================================================================
+// CAPTURE MECHANICS
+// Functions to detect and handle token captures between players
+// ============================================================================
+
+/**
+ * Check if the moving token captured any opponent tokens
+ * Compares token positions to detect collisions with opponent pieces
+ *
+ * @param {HTMLElement} movingToken - The token that just moved
+ * @param {number} playerNumber - Player number who owns the moving token
+ * @returns {Object|null} Capture result object or null if no capture
+ */
+export function checkForCapture(movingToken, playerNumber) {
+  const tokenX = parseInt(movingToken.style.getPropertyValue("--data-x"));
+  const tokenY = parseInt(movingToken.style.getPropertyValue("--data-y"));
+
+  // Check collision with all opponent tokens
+  for (const token of App.tokens) {
+    const otherPlayer = parseInt(token.dataset.player);
+    if (otherPlayer === playerNumber) continue; // Skip own tokens
+
+    const otherX = parseInt(token.style.getPropertyValue("--data-x"));
+    const otherY = parseInt(token.style.getPropertyValue("--data-y"));
+    const otherPosition = parseInt(token.dataset.position);
+
+    // Check for same position collision (exclude home tokens)
+    if (otherX === tokenX && otherY === tokenY && otherPosition >= 0) {
+      return {
+        capturedToken: token,
+        capturedPlayer: otherPlayer,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Execute token capture mechanics
+ * Moves captured token back to home and handles visual updates
+ *
+ * @param {Object} captureResult - Object containing captured token info
+ */
+export async function handleCapture(captureResult) {
+  const { capturedToken, capturedPlayer } = captureResult;
+
+  console.log(
+    `💥 Player ${App.gameState.currentPlayer} captured Player ${capturedPlayer}'s token!`
+  );
+
+  // Move captured token back to its home position
+  const playerData = App.getPlayerData(capturedPlayer);
+  const homePosition =
+    playerData.initialPositions[
+      parseInt(capturedToken.dataset.tokenNumber) - 1
+    ];
+
+  capturedToken.dataset.position = "-1";
+  capturedToken.style.setProperty("--data-x", homePosition[0]);
+  capturedToken.style.setProperty("--data-y", homePosition[1]);
+  capturedToken.classList.remove("active", "finished");
+}
+
+// ============================================================================
+// TOKEN CLICK HANDLING
+// Functions to handle token click events and user interactions
+// ============================================================================
+
+/**
+ * Initialize token click event listener
+ * This should be called after tokens are created
+ */
+export function initializeTokenClickHandler() {
+  // Add token click handling
+  document.addEventListener("click", handleTokenClickEvent);
+}
+
+/**
+ * Handle token click events
+ */
+function handleTokenClickEvent(event) {
+  const token = event.target.closest(".token");
+  if (!token) return;
+
+  // Check if token is active
+  if (token.dataset.active === "true") {
+    const playerNumber = parseInt(token.dataset.player);
+    const steps = parseInt(token.dataset.steps);
+
+    // Only allow current player to move their tokens
+    if (playerNumber === App.gameState.currentPlayer) {
+      handleTokenClick(token, steps);
+    }
+  }
+}
+
+/**
+ * Handle token click for movement
+ */
+function handleTokenClick(token, steps) {
+  // Deactivate all tokens
+  App.deactivateAllTokens();
+
+  // Execute the movement using the new game logic handler
+  App.handleTokenMovement(token, steps);
+
+  // Freeze dice during movement
+  App.freezeDice();
 }

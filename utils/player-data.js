@@ -41,3 +41,9 @@ export const player4 = {
 
 // Safe positions on the board (star positions and special safe zones)
 export const safe_index = [8, 13, 21, 26, 34, 39, 47];
+
+// ===========================================================
+// ============UTILITY FUNCTION TO GET PLAYER DATA============
+export function getPlayerData(playerNumber) {
+  return App[`player${playerNumber}`];
+}

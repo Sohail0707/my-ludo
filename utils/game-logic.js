@@ -25,6 +25,7 @@ export const gameState = {
   currentPlayer: 1,
   diceValue: 0,
   activeTokens: [], // Tokens that can be moved in the current turn
+  gameOver: false,
 };
 export let playerCount = gameState.playerCount;
 export let currentPlayer = gameState.currentPlayer;
@@ -219,15 +220,16 @@ function getOrdinalPosition(position) {
  */
 function handleGameEnd() {
   console.log("🎊 Game Over! All rankings determined.");
-
-  // Freeze dice to prevent further play
-  freezeDice();
-
-  // Remove current player indicator from board
-  removeBoardCurrentPlayer();
-
-  // Additional end game logic can be added here
-  // Example: Show final results modal, save scores, etc.
+  gameState.gameOver = true;
+  // Remove dice from DOM
+  if (diceContainer && diceContainer.parentNode) {
+    diceContainer.parentNode.removeChild(diceContainer);
+  }
+  // Add special class to board for game over animation
+  const board = document.querySelector(".board");
+  if (board) {
+    board.classList.add("game-over");
+  }
 }
 
 // GAME INITIALIZATION

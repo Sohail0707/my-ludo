@@ -48,7 +48,8 @@
   }
 
   &.finished .token-inner {
-    background-color: midnightblue;
+    background-color: whitesmoke;
+    border-color: currentColor;
   }
 
   /* Moveable token popup effect */

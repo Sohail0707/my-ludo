@@ -107,6 +107,10 @@ function showDiceFace(faceNumber) {
 
 // Function Roll Dice
 function rollDice() {
+  if (gameState.gameOver) {
+    console.log("Game is over. No more dice rolls allowed.");
+    return;
+  }
   let diceValue;
   if (isDebugMode() && getDebugDiceValue() !== null) {
     diceValue = getDebugDiceValue();

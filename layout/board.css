@@ -117,188 +117,44 @@
 /* Make a Player Winner */
 /* =================================================== */
 
-[winner-player="1"][winner-position="1"] {
-  & .home.position-1::after {
-    content: "🥇";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
+.home[winner-player][winner-position="1"]::after {
+  content: "🥇";
+  position: absolute;
+  z-index: 5;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 100px;
+  color: black;
 }
-[winner-player="1"][winner-position="2"] {
-  & .home.position-1::after {
-    content: "🥈";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
+.home[winner-player][winner-position="2"]::after {
+  content: "🥈";
+  position: absolute;
+  z-index: 5;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 100px;
+  color: black;
 }
-[winner-player="1"][winner-position="3"] {
-  & .home.position-1::after {
-    content: "🥉";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-
-[winner-player="2"][winner-position="1"] {
-  & .home.position-2::after {
-    content: "🥇";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="2"][winner-position="2"] {
-  & .home.position-2::after {
-    content: "🥈";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="2"][winner-position="3"] {
-  & .home.position-2::after {
-    content: "🥉";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-
-[winner-player="3"][winner-position="1"] {
-  & .home.position-3::after {
-    content: "🥇";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="3"][winner-position="2"] {
-  & .home.position-3::after {
-    content: "🥈";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="3"][winner-position="3"] {
-  & .home.position-3::after {
-    content: "🥉";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-
-[winner-player="4"][winner-position="1"] {
-  & .home.position-4::after {
-    content: "🥇";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="4"][winner-position="2"] {
-  & .home.position-4::after {
-    content: "🥈";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
-}
-[winner-player="4"][winner-position="3"] {
-  & .home.position-4::after {
-    content: "🥉";
-    position: absolute;
-    z-index: 5;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-size: 100px;
-    color: black;
-  }
+.home[winner-player][winner-position="3"]::after {
+  content: "🥉";
+  position: absolute;
+  z-index: 5;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 100px;
+  color: black;
 }
 
 /* =================================================== */

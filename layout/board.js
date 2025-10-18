@@ -10,6 +10,10 @@ export function removeBoardCurrentPlayer() {
 }
 
 export function makePlayerWin(playerNumber, winnerPosition) {
-  board.setAttribute("winner-player", `${playerNumber}`);
-  board.setAttribute("winner-position", `${winnerPosition}`);
+  // Instead of setting global winner-player/winner-position, set attributes on the player's home element
+  const home = document.querySelector(`.home.position-${playerNumber}`);
+  if (home) {
+    home.setAttribute("winner-player", `${playerNumber}`);
+    home.setAttribute("winner-position", `${winnerPosition}`);
+  }
 }

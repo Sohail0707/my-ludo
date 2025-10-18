@@ -1,3 +1,12 @@
+// ==========================================================
+// =================IMPORTS AND DEPENDENCIES=================
+import {
+  gameState,
+  gameBrain,
+  switchToNextPlayer,
+} from "../../utils/game-logic.js";
+import { removeBoardCurrentPlayer } from "../../layout/board.js";
+
 // Create Dice
 export const dice = document.createElement("div");
 dice.className = "dice";
@@ -108,8 +117,8 @@ function rollDice() {
   showDiceFace(randomDiceValue);
   setTimeout(() => {
     diceSpinner.classList.remove("spin");
-    App.handleDiceValue(randomDiceValue);
-    App.removeBoardCurrentPlayer();
+    handleDiceValue(randomDiceValue);
+    removeBoardCurrentPlayer();
   }, 500);
 }
 
@@ -136,22 +145,22 @@ export let consecutiveSixes = {
 };
 
 export function handleSpecialDiceRules(diceValue) {
-  const playerKey = `player${App.gameState.currentPlayer}`;
+  const playerKey = `player${gameState.currentPlayer}`;
 
   if (diceValue === 6) {
     consecutiveSixes[playerKey]++;
     console.log(
-      `🎲 Player ${App.gameState.currentPlayer} rolled a 6! (${consecutiveSixes[playerKey]} in a row)`
+      `🎲 Player ${gameState.currentPlayer} rolled a 6! (${consecutiveSixes[playerKey]} in a row)`
     );
 
     // Three consecutive sixes = forfeit turn
     if (consecutiveSixes[playerKey] >= 3) {
       console.log(
-        `⚠️ Player ${App.gameState.currentPlayer} rolled 3 sixes in a row! Turn forfeited.`
+        `⚠️ Player ${gameState.currentPlayer} rolled 3 sixes in a row! Turn forfeited.`
       );
       consecutiveSixes[playerKey] = 0;
       setTimeout(() => {
-        App.switchToNextPlayer();
+        switchToNextPlayer();
       }, 500);
       return true; // Return true to indicate turn is forfeited
     }
@@ -166,11 +175,11 @@ export function handleSpecialDiceRules(diceValue) {
 // Handle dice value and trigger game brain
 export function handleDiceValue(value) {
   // Check for consecutive sixes first, before activating tokens
-  const isTurnForfeited = App.handleSpecialDiceRules(value);
+  const isTurnForfeited = handleSpecialDiceRules(value);
 
   // Only activate tokens if turn is not forfeited
   if (!isTurnForfeited) {
-    App.gameBrain(value);
+    gameBrain(value);
   } else {
     console.log(
       "🚫 Tokens not activated - turn forfeited due to consecutive 6's"

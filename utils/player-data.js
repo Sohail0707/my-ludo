@@ -45,5 +45,16 @@ export const safe_index = [8, 13, 21, 26, 34, 39, 47];
 // ===========================================================
 // ============UTILITY FUNCTION TO GET PLAYER DATA============
 export function getPlayerData(playerNumber) {
-  return App[`player${playerNumber}`];
+  switch (playerNumber) {
+    case 1:
+      return player1;
+    case 2:
+      return player2;
+    case 3:
+      return player3;
+    case 4:
+      return player4;
+    default:
+      return null;
+  }
 }

@@ -1,22 +1,42 @@
+// ==========================================================
+// =================IMPORTS AND DEPENDENCIES=================
+import { board } from "../../layout/board.js";
+import { unfreezeDice } from "../dice/dice.js";
+import {
+  player1,
+  player2,
+  player3,
+  player4,
+  safe_index,
+  getPlayerData,
+} from "../../utils/player-data.js";
+import {
+  gameState,
+  playerCount,
+  switchToNextPlayer,
+  checkWinCondition,
+} from "../../utils/game-logic.js";
+import { freezeDice } from "../dice/dice.js";
+
 // Token State and Positions
 export const tokens = [];
 
 export function initializeTokens() {
   // Initialize tokens for active players
-  if (App.playerCount == 2 || App.playerCount == 4) {
-    if (App.player1.initialPositions) {
-      init(App.player1, 1);
+  if (playerCount == 2 || playerCount == 4) {
+    if (player1.initialPositions) {
+      init(player1, 1);
     }
-    if (App.player3.initialPositions) {
-      init(App.player3, 3);
+    if (player3.initialPositions) {
+      init(player3, 3);
     }
   }
-  if (App.playerCount == 4) {
-    if (App.player2.initialPositions) {
-      init(App.player2, 2);
+  if (playerCount == 4) {
+    if (player2.initialPositions) {
+      init(player2, 2);
     }
-    if (App.player4.initialPositions) {
-      init(App.player4, 4);
+    if (player4.initialPositions) {
+      init(player4, 4);
     }
   }
 
@@ -52,7 +72,7 @@ export function initializeTokens() {
       tokenElement.appendChild(tokenInnerElement);
       tokens.push(tokenElement);
       addTokenEventListeners(tokenElement);
-      App.board.appendChild(tokenElement);
+      board.appendChild(tokenElement);
     });
   }
 
@@ -83,17 +103,17 @@ export function deactivateAllTokens() {
 }
 
 export function checkTokenSafty() {
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     const currentPosition = parseInt(token.dataset.position);
 
     // Tokens are safe in these conditions:
     // 1. At home (position -1)
     // 2. At starting position (position 0)
-    // 3. On safe star positions (App.safe_index)
+    // 3. On safe star positions (safe_index)
     if (
       currentPosition === -1 ||
       currentPosition === 0 ||
-      App.safe_index.includes(parseInt(currentPosition))
+      safe_index.includes(parseInt(currentPosition))
     ) {
       token.classList.contains("safe") ? "" : token.classList.add("safe");
       console.log(`Token at position ${currentPosition} is SAFE`);
@@ -107,7 +127,7 @@ export function checkTokenSafty() {
 // Function to move token by specified steps with animation
 export async function moveToken(token, steps) {
   const playerNumber = parseInt(token.dataset.player);
-  const player = App[`player${playerNumber}`];
+  const player = getPlayerData(playerNumber);
 
   let currentPosition = parseInt(token.dataset.position);
   for (let step = 1; step <= steps; step++) {
@@ -124,7 +144,7 @@ export async function moveToken(token, steps) {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   token.dataset.steps = 0;
-  App.unfreezeDice(); // Unfreeze dice after token movement
+  unfreezeDice(); // Unfreeze dice after token movement
   analyzeAndArrangeAllTokens();
 }
 
@@ -133,7 +153,7 @@ export async function moveToken(token, steps) {
 export function analyzeAndArrangeAllTokens() {
   console.log("called analyse token");
 
-  if (!App.tokens) return;
+  if (!tokens) return;
 
   // Add small delay to ensure DOM updates are complete
   setTimeout(() => {
@@ -145,10 +165,10 @@ export function analyzeAndArrangeAllTokens() {
 export function analyzeAndArrangeAllTokensSync() {
   console.log("called analyse token (sync)");
 
-  if (!App.tokens) return;
+  if (!tokens) return;
 
   // Force browser to recalculate styles by accessing offsetHeight
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     token.offsetHeight; // Forces style recalculation
   });
 
@@ -157,7 +177,7 @@ export function analyzeAndArrangeAllTokensSync() {
 
 function arrangeTokensNow() {
   // Step 1: Reset all tokens to default positioning
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     token.style.setProperty("--size-value", "1.5");
     token.style.setProperty("--position-value", "0");
   });
@@ -165,7 +185,7 @@ function arrangeTokensNow() {
   // Step 2: Group tokens by their x,y coordinates
   const positionGroups = new Map();
 
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     const x = parseInt(token.style.getPropertyValue("--data-x"));
     const y = parseInt(token.style.getPropertyValue("--data-y"));
     const position = parseInt(token.dataset.position);
@@ -231,9 +251,9 @@ function arrangeTokensNow() {
 export function findMoveableTokens(playerNumber, diceValue) {
   const moveableTokens = [];
 
-  if (!App.tokens) return moveableTokens;
+  if (!tokens) return moveableTokens;
 
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     if (parseInt(token.dataset.player) !== playerNumber) return;
 
     const currentPosition = parseInt(token.dataset.position);
@@ -248,7 +268,7 @@ export function findMoveableTokens(playerNumber, diceValue) {
       });
     } else if (!isAtHome && currentPosition >= 0) {
       // Token on board - check if it can move without overshooting finish
-      const playerData = App.getPlayerData(playerNumber);
+      const playerData = getPlayerData(playerNumber);
       const newPosition = currentPosition + diceValue;
       const maxPosition = playerData.positions.length - 1;
 
@@ -267,25 +287,23 @@ export function findMoveableTokens(playerNumber, diceValue) {
 }
 
 export function handleNoMoveableTokens() {
-  console.log(
-    `🚫 No moveable tokens for Player ${App.gameState.currentPlayer}`
-  );
+  console.log(`🚫 No moveable tokens for Player ${gameState.currentPlayer}`);
 
-  App.deactivateAllTokens();
+  deactivateAllTokens();
 
   setTimeout(() => {
-    App.switchToNextPlayer();
+    switchToNextPlayer();
   }, 300);
 }
 
 export function handleSingleMoveableToken(moveableTokenInfo, diceValue) {
   console.log(
-    `🎯 Auto-moving single token for Player ${App.gameState.currentPlayer}`
+    `🎯 Auto-moving single token for Player ${gameState.currentPlayer}`
   );
 
   const { token, moveType } = moveableTokenInfo;
 
-  App.deactivateAllTokens();
+  deactivateAllTokens();
 
   // Calculate steps: tokens exiting home move 1 step, others move dice value
   const steps = moveType === "exit_home" ? 1 : diceValue;
@@ -295,20 +313,20 @@ export function handleSingleMoveableToken(moveableTokenInfo, diceValue) {
 
 export function handleMultipleMoveableTokens(moveableTokens, diceValue) {
   console.log(
-    `🎲 Player ${App.gameState.currentPlayer} has ${moveableTokens.length} moveable tokens`
+    `🎲 Player ${gameState.currentPlayer} has ${moveableTokens.length} moveable tokens`
   );
 
-  App.deactivateAllTokens();
+  deactivateAllTokens();
 
   // Activate moveable tokens and set their movement steps
   moveableTokens.forEach(({ token, moveType }) => {
     const steps = moveType === "exit_home" ? 1 : diceValue;
-    App.activateToken(token);
+    activateToken(token);
     token.dataset.steps = steps;
   });
 
   // Store for reference during user selection
-  App.gameState.activeTokens = moveableTokens;
+  gameState.activeTokens = moveableTokens;
 }
 
 // ============================================================================
@@ -332,7 +350,7 @@ export async function handleTokenMovement(token, steps) {
   if (currentPosition === -1) {
     moveType = "exit_home";
   } else {
-    const playerData = App.getPlayerData(playerNumber);
+    const playerData = getPlayerData(playerNumber);
     const newPosition = currentPosition + steps;
     const maxPosition = playerData.positions.length - 1;
     if (newPosition === maxPosition) {
@@ -344,7 +362,7 @@ export async function handleTokenMovement(token, steps) {
   await moveToken(token, steps);
 
   // Handle all post-movement game logic
-  await App.handlePostMovementLogic(token, playerNumber, moveType);
+  await handlePostMovementLogic(token, playerNumber, moveType);
 }
 
 // ============================================================================
@@ -368,7 +386,7 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
     console.log(`🏁 Player ${playerNumber} token reached finish!`);
     token.classList.add("finished");
     shouldGetExtraTurn = true;
-    App.checkWinCondition(playerNumber);
+    checkWinCondition(playerNumber);
   }
 
   // Check for token captures
@@ -379,9 +397,9 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
   }
 
   // Determine next turn based on extra turn conditions and dice value
-  if (!shouldGetExtraTurn && App.gameState.diceValue !== 6) {
+  if (!shouldGetExtraTurn && gameState.diceValue !== 6) {
     setTimeout(() => {
-      App.switchToNextPlayer();
+      switchToNextPlayer();
     }, 300);
   } else {
     console.log(`🎲 Player ${playerNumber} gets another turn!`);
@@ -406,7 +424,7 @@ export function checkForCapture(movingToken, playerNumber) {
   const tokenY = parseInt(movingToken.style.getPropertyValue("--data-y"));
 
   // Check collision with all opponent tokens
-  for (const token of App.tokens) {
+  for (const token of tokens) {
     const otherPlayer = parseInt(token.dataset.player);
     if (otherPlayer === playerNumber) continue; // Skip own tokens
 
@@ -436,11 +454,11 @@ export async function handleCapture(captureResult) {
   const { capturedToken, capturedPlayer } = captureResult;
 
   console.log(
-    `💥 Player ${App.gameState.currentPlayer} captured Player ${capturedPlayer}'s token!`
+    `💥 Player ${gameState.currentPlayer} captured Player ${capturedPlayer}'s token!`
   );
 
   // Move captured token back to its home position
-  const playerData = App.getPlayerData(capturedPlayer);
+  const playerData = getPlayerData(capturedPlayer);
   const homePosition =
     playerData.initialPositions[
       parseInt(capturedToken.dataset.tokenNumber) - 1
@@ -479,7 +497,7 @@ function handleTokenClickEvent(event) {
     const steps = parseInt(token.dataset.steps);
 
     // Only allow current player to move their tokens
-    if (playerNumber === App.gameState.currentPlayer) {
+    if (playerNumber === gameState.currentPlayer) {
       handleTokenClick(token, steps);
     }
   }
@@ -490,11 +508,11 @@ function handleTokenClickEvent(event) {
  */
 function handleTokenClick(token, steps) {
   // Deactivate all tokens
-  App.deactivateAllTokens();
+  deactivateAllTokens();
 
   // Execute the movement using the new game logic handler
-  App.handleTokenMovement(token, steps);
+  handleTokenMovement(token, steps);
 
   // Freeze dice during movement
-  App.freezeDice();
+  freezeDice();
 }

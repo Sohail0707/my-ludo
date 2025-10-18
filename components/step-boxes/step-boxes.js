@@ -1,3 +1,7 @@
+// ==========================================================
+// =================IMPORTS AND DEPENDENCIES=================
+import { board } from "../../layout/board.js";
+
 // Generate Boxes Grid
 export function generateStepBoxes() {
   for (let i = 0; i < 72; i++) {
@@ -31,6 +35,6 @@ export function generateStepBoxes() {
     />
   </svg>`;
     }
-    App.board.appendChild(stepBox);
+    board.appendChild(stepBox);
   }
 }

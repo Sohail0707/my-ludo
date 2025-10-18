@@ -1,6 +1,31 @@
 // ==========================================================
 // =================IMPORTS AND DEPENDENCIES=================
-import { moveToken } from "../components/token/token.js";
+import {
+  moveToken,
+  tokens,
+  findMoveableTokens,
+  handleNoMoveableTokens,
+  handleSingleMoveableToken,
+  handleMultipleMoveableTokens,
+} from "../components/token/token.js";
+import {
+  diceContainer,
+  freezeDice,
+  unfreezeDice,
+  consecutiveSixes,
+} from "../components/dice/dice.js";
+import {
+  updateCurrentPlayerOnBoard,
+  removeBoardCurrentPlayer,
+  makePlayerWin,
+} from "../layout/board.js";
+import {
+  player1,
+  player2,
+  player3,
+  player4,
+  getPlayerData,
+} from "./player-data.js";
 
 // ==========================================================
 // ==================GAME STATE MANAGEMENT==================
@@ -40,19 +65,13 @@ export function switchToNextPlayer() {
   gameState.currentPlayer = nextPlayer;
   currentPlayer = gameState.currentPlayer; // Keep the exported variable in sync
 
-  // Update the App object with the new current player
-  if (window.App) {
-    window.App.currentPlayer = gameState.currentPlayer;
-    window.App.gameState = gameState; // Also expose the gameState object
-  }
-
   // Move dice to the next player's position
   document
     .querySelector(`.dice-control.position-${gameState.currentPlayer}`)
-    .appendChild(App.diceContainer);
+    .appendChild(diceContainer);
 
-  App.unfreezeDice(); // Unfreeze dice for next player
-  App.updateCurrentPlayerOnBoard(gameState.currentPlayer);
+  unfreezeDice(); // Unfreeze dice for next player
+  updateCurrentPlayerOnBoard(gameState.currentPlayer);
 
   console.log(`🔄 Switched to Player ${gameState.currentPlayer}`);
 }
@@ -70,18 +89,15 @@ export function gameBrain(diceValue) {
   gameState.diceValue = diceValue;
 
   // Find all tokens that can move for current player
-  const moveableTokens = App.findMoveableTokens(
-    gameState.currentPlayer,
-    diceValue
-  );
+  const moveableTokens = findMoveableTokens(gameState.currentPlayer, diceValue);
 
   // Handle different scenarios based on number of moveable tokens
   if (moveableTokens.length === 0) {
-    App.handleNoMoveableTokens();
+    handleNoMoveableTokens();
   } else if (moveableTokens.length === 1) {
-    App.handleSingleMoveableToken(moveableTokens[0], diceValue);
+    handleSingleMoveableToken(moveableTokens[0], diceValue);
   } else {
-    App.handleMultipleMoveableTokens(moveableTokens, diceValue);
+    handleMultipleMoveableTokens(moveableTokens, diceValue);
   }
 
   // Note: Special dice rules (consecutive sixes) are now handled before gameBrain() is called
@@ -98,8 +114,8 @@ export function gameBrain(diceValue) {
  *
  * @param {number} playerNumber - Player number to check for win condition
  */
-function checkWinCondition(playerNumber) {
-  const playerTokens = App.tokens.filter(
+export function checkWinCondition(playerNumber) {
+  const playerTokens = tokens.filter(
     (token) => parseInt(token.dataset.player) === playerNumber
   );
 
@@ -122,7 +138,7 @@ function checkWinCondition(playerNumber) {
     playerRankings.push(playerNumber);
 
     // Mark player as winner on the board
-    App.makePlayerWin(playerNumber, winnerPosition);
+    makePlayerWin(playerNumber, winnerPosition);
 
     // Deactivate the winning player - they can't play anymore
     deactivateFinishedPlayer(playerNumber);
@@ -144,7 +160,7 @@ function deactivateFinishedPlayer(playerNumber) {
   );
 
   // Deactivate all tokens for this player
-  App.tokens.forEach((token) => {
+  tokens.forEach((token) => {
     if (parseInt(token.dataset.player) === playerNumber) {
       token.classList.remove("active");
       token.dataset.active = "false";
@@ -173,7 +189,7 @@ function checkGameEndCondition() {
     if (fourthPlace) {
       console.log(`4️⃣ 4th Place: Player ${fourthPlace}`);
       playerRankings.push(fourthPlace);
-      App.makePlayerWin(fourthPlace, 4);
+      makePlayerWin(fourthPlace, 4);
     }
 
     handleGameEnd();
@@ -188,7 +204,7 @@ function checkGameEndCondition() {
     if (secondPlace) {
       console.log(`🥈 2nd Place: Player ${secondPlace}`);
       playerRankings.push(secondPlace);
-      App.makePlayerWin(secondPlace, 2);
+      makePlayerWin(secondPlace, 2);
     }
 
     handleGameEnd();
@@ -219,10 +235,10 @@ function handleGameEnd() {
   console.log("🎊 Game Over! All rankings determined.");
 
   // Freeze dice to prevent further play
-  App.freezeDice();
+  freezeDice();
 
   // Remove current player indicator from board
-  App.removeBoardCurrentPlayer();
+  removeBoardCurrentPlayer();
 
   // Additional end game logic can be added here
   // Example: Show final results modal, save scores, etc.
@@ -270,11 +286,7 @@ export function initializeGame() {
   playerRankings.length = 0;
   finishedPlayers.clear();
 
-  // Ensure App object is properly synchronized
-  if (window.App) {
-    window.App.currentPlayer = gameState.currentPlayer;
-    window.App.gameState = gameState;
-  }
+  // Game state is already properly managed through exports
 
   console.log(`🎯 Game ready! Player ${gameState.currentPlayer} starts.`);
 }
@@ -284,13 +296,4 @@ export function initializeGame() {
 // Small utility functions used throughout the game logic
 // ============================================================================
 
-/**
- * Get player data object by player number
- * Returns the player's position arrays and game data
- *
- * @param {number} playerNumber - Player number (1-4)
- * @returns {Object} Player data object with positions and initial positions
- */
-export function getPlayerData(playerNumber) {
-  return App[`player${playerNumber}`];
-}
+// getPlayerData is now imported from player-data.js

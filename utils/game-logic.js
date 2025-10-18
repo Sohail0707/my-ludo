@@ -38,6 +38,12 @@ export let playerRankings = []; // Array to store players in finishing order [1s
 
 // PLAYER SWITCHING
 export function switchToNextPlayer() {
+  // Check if game is over - no more player switching allowed
+  if (gameState.gameOver) {
+    console.log("🎊 Game is over - no more player switching");
+    return;
+  }
+
   let nextPlayer = gameState.currentPlayer;
   let attempts = 0;
   const maxAttempts = 4; // Prevent infinite loop
@@ -69,6 +75,12 @@ export function switchToNextPlayer() {
 
 // GAME LOGIC
 export function gameBrain(diceValue) {
+  // Check if game is over before processing any moves
+  if (gameState.gameOver) {
+    console.log("🎊 Game is over - ignoring dice roll");
+    return;
+  }
+
   console.log(
     `🎮 Game Brain: Player ${gameState.currentPlayer} rolled ${diceValue}`
   );
@@ -128,11 +140,13 @@ export function checkWinCondition(playerNumber) {
     // Deactivate the winning player - they can't play anymore
     deactivateFinishedPlayer(playerNumber);
 
-    // Check if we should end the game
-    checkGameEndCondition();
-    return true;
+    // Check if we should end the game BEFORE any player switching
+    const gameEnded = checkGameEndCondition();
+
+    // Return both win status and whether game ended
+    return { playerWon: true, gameEnded: gameEnded };
   }
-  return false;
+  return { playerWon: false, gameEnded: false };
 }
 
 /**
@@ -158,6 +172,7 @@ function deactivateFinishedPlayer(playerNumber) {
 /**
  * Check if the game should end based on current rankings
  * Game ends after 3rd place is determined (for 4-player game)
+ * @returns {boolean} True if game ended, false if game continues
  */
 function checkGameEndCondition() {
   const totalPlayers = gameState.playerCount;
@@ -180,6 +195,7 @@ function checkGameEndCondition() {
     }
 
     handleGameEnd();
+    return true; // Game ended
   } else if (totalPlayers === 2 && finishedCount >= 1) {
     // For 2-player game: stop after 1st place
     console.log("🎊 Game Complete!");
@@ -195,8 +211,10 @@ function checkGameEndCondition() {
     }
 
     handleGameEnd();
+    return true; // Game ended
   }
   // Game continues if we haven't reached the end condition
+  return false;
 }
 
 /**
@@ -221,15 +239,20 @@ function getOrdinalPosition(position) {
 function handleGameEnd() {
   console.log("🎊 Game Over! All rankings determined.");
   gameState.gameOver = true;
-  // Remove dice from DOM
-  if (diceContainer && diceContainer.parentNode) {
-    diceContainer.parentNode.removeChild(diceContainer);
-  }
-  // Add special class to board for game over animation
+
+  // Freeze the dice permanently
+  freezeDice();
+
+  // Remove current player indicator immediately
+  removeBoardCurrentPlayer();
+
+  // Add special class to board for game over state
   const board = document.querySelector(".board");
   if (board) {
     board.classList.add("game-over");
   }
+
+  console.log("🚫 Game controls disabled - game over!");
 }
 
 // GAME INITIALIZATION
@@ -240,6 +263,7 @@ export function initializeGame() {
   gameState.currentPlayer = 1;
   gameState.diceValue = 0;
   gameState.activeTokens = [];
+  gameState.gameOver = false; // Reset game over state
 
   // Reset special condition tracking
   Object.keys(consecutiveSixes).forEach((key) => {
@@ -250,7 +274,11 @@ export function initializeGame() {
   playerRankings.length = 0;
   finishedPlayers.clear();
 
-  // Game state is already properly managed through exports
+  // Remove game-over class from board if it exists
+  const board = document.querySelector(".board");
+  if (board) {
+    board.classList.remove("game-over");
+  }
 
   console.log(`🎯 Game ready! Player ${gameState.currentPlayer} starts.`);
 }

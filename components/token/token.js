@@ -354,9 +354,14 @@ export async function handlePostMovementLogic(token, playerNumber, moveType) {
     console.log(`🏁 Player ${playerNumber} token reached finish!`);
     token.classList.add("finished");
     shouldGetExtraTurn = true;
-    const wasWinner = checkWinCondition(playerNumber);
-    // If player just won, switch to next player immediately
-    if (wasWinner) {
+    const winResult = checkWinCondition(playerNumber);
+    // If player just won and game ended, don't continue with any player switching
+    if (winResult.gameEnded) {
+      console.log("🎊 Game has ended - no more turns!");
+      return;
+    }
+    // If player won but game continues, switch to next player
+    if (winResult.playerWon) {
       setTimeout(() => {
         switchToNextPlayer();
       }, 300);

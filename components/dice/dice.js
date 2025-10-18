@@ -8,6 +8,9 @@ import { removeBoardCurrentPlayer } from "../../layout/board.js";
 import { isDebugMode, getDebugDiceValue } from "../../debug/debug.js";
 import { setupDebugUI } from "../../debug/debug-ui.js";
 
+// DEBUG TOGGLE - Set to false to disable debug mode
+const DEBUG_ENABLED = false;
+
 // DICE ELEMENTS
 export const dice = document.createElement("div");
 dice.className = "dice";
@@ -26,9 +29,11 @@ diceContainer.addEventListener("click", () => {
   rollDice();
 });
 
-// Inject debug UI on game start
+// Inject debug UI on game start (only if debug is enabled)
 window.addEventListener("DOMContentLoaded", () => {
-  setupDebugUI();
+  if (DEBUG_ENABLED) {
+    setupDebugUI();
+  }
 });
 
 // Create Dice Faces
@@ -112,7 +117,7 @@ function rollDice() {
     return;
   }
   let diceValue;
-  if (isDebugMode() && getDebugDiceValue() !== null) {
+  if (DEBUG_ENABLED && isDebugMode() && getDebugDiceValue() !== null) {
     diceValue = getDebugDiceValue();
     // Bypass dice animation for debug mode
     handleDiceValue(diceValue);

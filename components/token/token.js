@@ -458,7 +458,13 @@ export function checkForCapture(movingToken, playerNumber) {
     const otherPosition = parseInt(token.dataset.position);
 
     // Check for same position collision (exclude home tokens)
-    if (otherX === tokenX && otherY === tokenY && otherPosition >= 0) {
+    // Only capture if opponent token is NOT safe
+    if (
+      otherX === tokenX &&
+      otherY === tokenY &&
+      otherPosition >= 0 &&
+      !token.classList.contains("safe")
+    ) {
       return {
         capturedToken: token,
         capturedPlayer: otherPlayer,

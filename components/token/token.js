@@ -108,6 +108,7 @@ export async function moveToken(token, steps) {
 
   let currentPosition = parseInt(token.dataset.position);
   for (let step = 1; step <= steps; step++) {
+    if (step === 1) analyzeAndArrangeAllTokens();
     currentPosition++;
     const [x, y] = player.positions[currentPosition];
     token.style.setProperty("--data-x", x);
@@ -121,4 +122,104 @@ export async function moveToken(token, steps) {
   }
   token.dataset.steps = 0;
   App.unfreezeDice(); // Unfreeze dice after token movement
+  analyzeAndArrangeAllTokens();
+}
+
+// ============================================================================
+// TOKEN POSITIONING AND OVERLAP MANAGEMENT
+// ============================================================================
+export function analyzeAndArrangeAllTokens() {
+  console.log("called analyse token");
+
+  if (!App.tokens) return;
+
+  // Add small delay to ensure DOM updates are complete
+  setTimeout(() => {
+    arrangeTokensNow();
+  }, 50);
+}
+
+// Alternative synchronous version with forced style recalculation
+export function analyzeAndArrangeAllTokensSync() {
+  console.log("called analyse token (sync)");
+
+  if (!App.tokens) return;
+
+  // Force browser to recalculate styles by accessing offsetHeight
+  App.tokens.forEach((token) => {
+    token.offsetHeight; // Forces style recalculation
+  });
+
+  arrangeTokensNow();
+}
+
+function arrangeTokensNow() {
+  // Step 1: Reset all tokens to default positioning
+  App.tokens.forEach((token) => {
+    token.style.setProperty("--size-value", "1.5");
+    token.style.setProperty("--position-value", "0");
+  });
+
+  // Step 2: Group tokens by their x,y coordinates
+  const positionGroups = new Map();
+
+  App.tokens.forEach((token) => {
+    const x = parseInt(token.style.getPropertyValue("--data-x"));
+    const y = parseInt(token.style.getPropertyValue("--data-y"));
+    const position = parseInt(token.dataset.position);
+
+    // Skip tokens at home position (-1) as they have individual positions
+    if (position === -1) return;
+
+    const key = `${x},${y}`;
+
+    if (!positionGroups.has(key)) {
+      positionGroups.set(key, []);
+    }
+    positionGroups.get(key).push(token);
+  });
+
+  // Step 3: Arrange overlapping token groups
+  positionGroups.forEach((tokens) => {
+    if (tokens.length > 1) {
+      const tokenCount = tokens.length;
+      let sizeValue, positions;
+
+      // Calculate arrangement parameters based on number of tokens
+      switch (tokenCount) {
+        case 2:
+          sizeValue = 2.0;
+          positions = [-1.0, 1.0];
+          break;
+
+        case 3:
+          sizeValue = 2.5;
+          positions = [-1.2, 0, 1.2];
+          break;
+
+        case 4:
+          sizeValue = 3.0;
+          positions = [-1.4, -0.5, 0.5, 1.4];
+          break;
+
+        default:
+          sizeValue = 3.5;
+          positions = [];
+          for (let i = 0; i < tokenCount; i++) {
+            positions.push(-1.6 + (3.2 * i) / (tokenCount - 1));
+          }
+      }
+
+      // Apply positioning to each token in the group
+      tokens.forEach((token, index) => {
+        token.style.setProperty("--size-value", sizeValue.toString());
+        token.style.setProperty(
+          "--position-value",
+          positions[index].toString()
+        );
+      });
+
+      console.log(`🔄 Arranged ${tokenCount} overlapping tokens`);
+    }
+  });
 }

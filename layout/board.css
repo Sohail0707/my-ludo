@@ -21,6 +21,7 @@
   grid-template-rows: repeat(6, 1fr);
   outline: 1px solid midnightblue;
   background-color: currentColor;
+  /* box-shadow: inset 0 0 30px 10px rgba(0, 0, 0, 0.3); */
 
   position: relative;
   z-index: 2;
@@ -113,70 +114,223 @@
 }
 
 /* =================================================== */
+/* Make a Player Winner */
+/* =================================================== */
+
+[winner-player="1"][winner-position="1"] {
+  & .home.position-1::after {
+    content: "🥇";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="1"][winner-position="2"] {
+  & .home.position-1::after {
+    content: "🥈";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="1"][winner-position="3"] {
+  & .home.position-1::after {
+    content: "🥉";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+
+[winner-player="2"][winner-position="1"] {
+  & .home.position-2::after {
+    content: "🥇";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="2"][winner-position="2"] {
+  & .home.position-2::after {
+    content: "🥈";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="2"][winner-position="3"] {
+  & .home.position-2::after {
+    content: "🥉";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+
+[winner-player="3"][winner-position="1"] {
+  & .home.position-3::after {
+    content: "🥇";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="3"][winner-position="2"] {
+  & .home.position-3::after {
+    content: "🥈";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="3"][winner-position="3"] {
+  & .home.position-3::after {
+    content: "🥉";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+
+[winner-player="4"][winner-position="1"] {
+  & .home.position-4::after {
+    content: "🥇";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="4"][winner-position="2"] {
+  & .home.position-4::after {
+    content: "🥈";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+[winner-player="4"][winner-position="3"] {
+  & .home.position-4::after {
+    content: "🥉";
+    position: absolute;
+    z-index: 5;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    font-size: 100px;
+    color: black;
+  }
+}
+
+/* =================================================== */
 /* Flush the current position */
 /* =================================================== */
-.main-container.flush-1 {
+[current-player="1"] {
   .home.position-1,
   .center-triangle.position-1,
-  .grid-item.position-1 {
+  .step-boxes.position-1 {
     animation: flash 1s ease-in-out infinite;
   }
 }
-.main-container.flush-2 {
+[current-player="2"] {
   .home.position-2,
   .center-triangle.position-2,
-  .grid-item.position-2 {
+  .step-boxes.position-2 {
     animation: flash 1s ease-in-out infinite;
   }
 }
-.main-container.flush-3 {
+[current-player="3"] {
   .home.position-3,
   .center-triangle.position-3,
-  .grid-item.position-3 {
+  .step-boxes.position-3 {
     animation: flash 1s ease-in-out infinite;
   }
 }
-.main-container.flush-4 {
+[current-player="4"] {
   .home.position-4,
   .center-triangle.position-4,
-  .grid-item.position-4 {
+  .step-boxes.position-4 {
     animation: flash 1s ease-in-out infinite;
   }
-}
-
-/* Game message styles */
-.game-message {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  padding: 15px 25px;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 16px;
-  color: whitesmoke;
-  text-align: center;
-  min-width: 200px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  display: none;
-}
-
-.game-message.info {
-  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-}
-
-.game-message.success {
-  background: linear-gradient(45deg, #10b981, #047857);
-}
-
-.game-message.warning {
-  background: linear-gradient(45deg, #f59e0b, #d97706);
-}
-
-.game-message.error {
-  background: linear-gradient(45deg, #ef4444, #dc2626);
 }
 
 /* Sliding back animation for captured tokens */
@@ -220,7 +374,7 @@
 @keyframes flash {
   0%,
   100% {
-    opacity: 0.3;
+    opacity: 0.6;
   }
   50% {
     opacity: 1;
@@ -248,20 +402,5 @@
   }
   100% {
     transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@media (orientation: portrait) {
-  .main-container {
-    grid-template-columns: 2fr 1fr 2fr;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      "position-4 . position-1"
-      "board board board"
-      "position-3 . position-2";
-    & .dice-control {
-      width: 50%;
-      height: auto;
-    }
   }
 }

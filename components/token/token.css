@@ -1,5 +1,8 @@
 /* Token styles */
 .token {
+  --size-value: 1.5;
+  --position-value: 0;
+
   position: absolute;
   z-index: 2;
   width: calc(100% / 15);
@@ -14,7 +17,10 @@
 
   & .token-inner {
     position: relative;
-    width: 65%;
+    width: calc(100% / var(--size-value));
+    transform: translateX(
+      calc((100% / var(--size-value)) * var(--position-value))
+    );
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     background-color: currentColor;
@@ -59,7 +65,6 @@
     }
 
     & .token-inner {
-      transform: scale(1.15) translateZ(10px);
       position: relative;
       z-index: 2;
       & img {
@@ -70,22 +75,4 @@
 
   /* Special Token states */
   /* ================================================= */
-
-  &.left-medium .token-inner {
-    width: 50%;
-    transform: translate(calc(-50% + 2px), 0);
-  }
-  &.right-medium .token-inner {
-    width: 50%;
-    transform: translate(calc(50% - 2px), 0);
-  }
-
-  &.left-small .token-inner {
-    width: 30%;
-    transform: translate(calc(-100% + 2px), 0);
-  }
-  &.right-small .token-inner {
-    width: 30%;
-    transform: translate(calc(100% - 2px), 0);
-  }
 }

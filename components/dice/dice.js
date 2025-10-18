@@ -108,9 +108,8 @@ function rollDice() {
   showDiceFace(randomDiceValue);
   setTimeout(() => {
     diceSpinner.classList.remove("spin");
-    // App.diceValue = randomDiceValue;
-    // App.updateGame();
-    App.handleDiceValue(randomDiceValue);
+    App.handleDiceValue(6);
+    App.removeBoardCurrentPlayer();
   }, 500);
 }
 

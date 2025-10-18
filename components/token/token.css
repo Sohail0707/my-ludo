@@ -39,7 +39,7 @@
 
   &.being-captured .token-inner {
     background-color: crimson;
-    transition: all 0.1s;
+    transition: all 0.2s;
   }
 
   &.safe .token-inner {

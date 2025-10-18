@@ -1,0 +1,60 @@
+@import url("./layout/board.css");
+@import url("./components/dice/dice.css");
+@import url("./components/step-boxes/step-boxes.css");
+@import url("./components/token/token.css");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Initialize primary colors */
+.position-1 {
+  color: #ff6347;
+}
+.position-2 {
+  color: #00bfff;
+}
+.position-3 {
+  color: #41e500;
+}
+.position-4 {
+  color: #ffc800;
+}
+
+main {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: midnightblue;
+}
+
+.main-container {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 2fr 1fr 2fr;
+  grid-template-areas:
+    "position-4 board position-1"
+    ". board ."
+    "position-3 board position-2";
+  align-items: center;
+  gap: 32px;
+}
+
+@media (orientation: portrait) {
+  .main-container {
+    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "position-4 . position-1"
+      "board board board"
+      "position-3 . position-2";
+    & .player-control {
+      width: 50%;
+      height: auto;
+    }
+  }
+}

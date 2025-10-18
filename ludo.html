@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ludo</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <main>
+      <div class="main-container">
+        <div class="dice-control position-4"></div>
+        <div class="dice-control position-3"></div>
+        <div class="dice-control position-2"></div>
+        <div class="dice-control position-1"></div>
+
+        <div class="board">
+          <div class="home position-1">
+            <div class="home-container">
+              <div class="home-dot position-1"></div>
+              <div class="home-dot position-1"></div>
+              <div class="home-dot position-1"></div>
+              <div class="home-dot position-1"></div>
+            </div>
+          </div>
+          <div class="home position-2">
+            <div class="home-container">
+              <div class="home-dot position-2"></div>
+              <div class="home-dot position-2"></div>
+              <div class="home-dot position-2"></div>
+              <div class="home-dot position-2"></div>
+            </div>
+          </div>
+          <div class="home position-3">
+            <div class="home-container">
+              <div class="home-dot position-3"></div>
+              <div class="home-dot position-3"></div>
+              <div class="home-dot position-3"></div>
+              <div class="home-dot position-3"></div>
+            </div>
+          </div>
+          <div class="home position-4">
+            <div class="home-container">
+              <div class="home-dot position-4"></div>
+              <div class="home-dot position-4"></div>
+              <div class="home-dot position-4"></div>
+              <div class="home-dot position-4"></div>
+            </div>
+          </div>
+          <div class="center">
+            <div class="center-triangle position-1"></div>
+            <div class="center-triangle position-2"></div>
+            <div class="center-triangle position-3"></div>
+            <div class="center-triangle position-4"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="main.js"></script>
+    <script>
+      function calculateOptimalBoardSize() {
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Use 90% of the smaller dimension to leave some padding
+        const availableSize = Math.min(viewportWidth, viewportHeight) * 0.9;
+
+        // Find the largest number divisible by 15 that fits in the available space
+        const gridUnit = Math.floor(availableSize / 15);
+        const optimalSize = gridUnit * 15;
+
+        // Ensure minimum size for playability (minimum 600px)
+        const minSize = 600;
+        const finalSize = Math.max(optimalSize, minSize);
+
+        // If we had to use minimum size, recalculate to ensure divisibility by 15
+        const finalGridUnit = Math.floor(finalSize / 15);
+        const responsiveBoardSize = finalGridUnit * 15;
+
+        return responsiveBoardSize;
+      }
+
+      function setResponsiveBoardSize() {
+        const boardSize = calculateOptimalBoardSize();
+        document.documentElement.style.setProperty(
+          "--board-size",
+          `${boardSize}px`
+        );
+
+        // Calculate dice size based on board size
+        setResponsiveDiceSize(boardSize);
+      }
+
+      function setResponsiveDiceSize(boardSize) {
+        // Dice should be proportional to board size
+        // The dice container is 60% of center area, and center is 3/15 of board
+        // So dice area = board * (3/15) * 0.6 = board * 0.12
+        const diceSize = Math.floor(boardSize * 0.12); // Increased from 0.08 to 0.12 (12% of board size)
+        const diceHalf = Math.floor(diceSize / 2);
+        const dicePadding = Math.floor(diceSize * 0.15); // 15% of dice size
+        const dotSize = Math.floor(diceSize * 0.16); // 16% of dice size
+
+        // Set CSS custom properties for dice sizing
+        document.documentElement.style.setProperty(
+          "--dice-size",
+          `${diceSize}px`
+        );
+        document.documentElement.style.setProperty(
+          "--dice-half",
+          `${diceHalf}px`
+        );
+        document.documentElement.style.setProperty(
+          "--dice-padding",
+          `${dicePadding}px`
+        );
+        document.documentElement.style.setProperty(
+          "--dot-size",
+          `${dotSize}px`
+        );
+      }
+
+      // Set initial board size
+      setResponsiveBoardSize();
+
+      // Recalculate on window resize
+      window.addEventListener("resize", () => {
+        setResponsiveBoardSize();
+      });
+    </script>
+  </body>
+</html>

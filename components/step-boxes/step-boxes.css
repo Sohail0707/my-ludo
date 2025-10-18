@@ -1,0 +1,24 @@
+.step-boxes {
+  position: relative;
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  background-color: whitesmoke;
+  outline: 1px solid midnightblue;
+
+  &.position-1,
+  &.position-2,
+  &.position-3,
+  &.position-4 {
+    background-color: currentColor;
+  }
+
+  & .star {
+    position: relative;
+    color: midnightblue;
+    height: 60%;
+    stroke-width: 1;
+    aspect-ratio: 1 / 1;
+  }
+}
